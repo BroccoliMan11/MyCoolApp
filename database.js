@@ -1,14 +1,14 @@
 const firebase = require('firebase'); //npm i firebase
 
 const firebaseConfig = {
-    apiKey: "AIzaSyCYBF-Lk-b2AH9PhYYWhlnntkprhdZi-dc",
-    authDomain: "mycoolapp-49429.firebaseapp.com",
-    databaseURL: "https://mycoolapp-49429.firebaseio.com",
-    projectId: "mycoolapp-49429",
-    storageBucket: "mycoolapp-49429.appspot.com",
-    messagingSenderId: "1084506225639",
-    appId: "1:1084506225639:web:dcbc588e5ab2986827db42",
-    measurementId: "G-H2662RL7KF"
+    apiKey: process.env.DB_API_KEY ,
+    authDomain: process.env.DB_AUTH_DOMAIN,
+    databaseURL: process.env.DB_URL,
+    projectId: process.env.DB_PROJECT_ID,
+    storageBucket: process.env.DB_STORAGE_BUCKET,
+    messagingSenderId: process.env.DB_MESSAGING_SENDER_ID,
+    appId: process.env.DB_APP_ID,
+    measurementId: process.env.DB_MEASUREMENT_ID
 };
 
 const db = firebase.initializeApp(firebaseConfig);
