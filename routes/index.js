@@ -139,7 +139,7 @@ app.post('/register', async (req, res) => {
 
     req.checkBody('username', 'Username field cannot be empty.').notEmpty();
     req.checkBody('username', 'Username must be between 4-15 characters long.').len(4, 15);
-    req.checkBody('password', 'Password must be between 8-100 characters').len(8, 10);
+    req.checkBody('password', 'Password must be between 8-100 characters').len(8, 100);
     req.checkBody('password', 'Password must include one lowercase character, one uppercase character, a number, and a special character')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*]).{8,}$/, "i");
     req.checkBody('passwordMatch', 'Password must be between 8-100 characters long.').len(8, 100);
