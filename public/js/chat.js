@@ -15,7 +15,7 @@ async function addUser(){
 addUser();
 
 socket.on('chat-message', data => {
-    appendMessage(`${data.name}: ${data.message}`);
+    appendMessage(`${data.username}: ${data.message}`);
 })
 
 // socket.on('user-connected', name => {

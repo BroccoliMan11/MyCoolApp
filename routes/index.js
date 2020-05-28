@@ -1,7 +1,7 @@
 const express = require('express'); //npm i express
 const app = express.Router();
 
-require('dotenv').config();
+require('dotenv').config(); //npm i dotenv
 
 //sessions
 const session = require('express-session'); //npm i express-session
@@ -48,20 +48,18 @@ app.use((req, res, next) => {
 
 passport.use(new LocalStrategy(
     (username, password, done) => {
-        /*console.log(username);
-        console.log(password);*/
-        
-        firebase.database().ref("users/").orderByChild("username")
-        .equalTo(username).once("value",snapshot => {
+        firebase.database().ref('users/').orderByChild('username')
+        .equalTo(username).once('value',snapshot => {
             if (!snapshot.exists()){
                 done(null, false);
             }else{
-                user_id = Object.keys(snapshot.val());
-                const hash = snapshot.val()[user_id].password;
+                const user_id = Object.keys(snapshot.val())[0];
+                const user = snapshot.val()[user_id];
+                const hash = user.password;
     
                 bcrypt.compare(password, hash, (err, res) => {
                     if (res){
-                        return done(null, {user_id: user_id});
+                        return done(null, user);
                     }else{
                         return done(null, false);
                     }
@@ -72,59 +70,56 @@ passport.use(new LocalStrategy(
 ));
 
 //ROUTES
-
-async function getUserInfo(user_id){
-    let user;
-    await firebase.database().ref("users/").orderByKey()
-    .equalTo(user_id).once("value", snapshot => {
-        user = snapshot.val()[user_id];
-    });
-    return user;
-}
-
-app.get('/userinfo', async (req, res) => {
-    const user_id = req.user.user_id[0];
-    const userInfo = await getUserInfo(user_id);
-    res.json(userInfo);
+app.get('/userinfo', (req, res) => {
+    res.json(req.user);
 });
 
 app.get('/register', (req, res) => {
-    res.render('register', {title: "Registration"});
+    res.render('register', {page: 'register'});
 });
 
 app.get('/', (req, res) => {
     /*console.log(req.user);
     console.log(req.isAuthenticated());*/
-    res.render('home', {title: "Home"});
+    res.render('home', {page: 'home'});
 });
 
 app.get('/profile', authenticationMiddleware(), async (req, res) => {
-    const user_id = req.user.user_id[0];
-    const userInfo = await getUserInfo(user_id);
+    const user = req.user;
     res.render(
         'profile', 
         {
-            title: "Profile", 
-            username: userInfo.username, 
-            password: /*userInfo.password*/ "Oops! Can't show that!" 
+            page: 'profile',
+            username: user.username, 
+            password: user.password
         }
     );
 });
 
 app.get('/chat', authenticationMiddleware(), (req, res) => {
-    res.render('chat', {chat: true, title: 'Chat'});
+    res.render('chat', {chat: true, page: 'chat'});
 });
 
 app.get('/login', (req, res) => {
-    res.render('login', {title: "Login"});
+    res.render('login', {page: 'login'});
 });
 
-app.post('/login', passport.authenticate(
-    'local', {
-        successRedirect: '/profile',
-        failureRedirect: '/login'
-    }
-));
+app.post('/login', (req, res, next) => {
+    passport.authenticate('local', (err, user, info) => {
+        if (err) console.error(err);
+        if (!user) {
+            console.log('yes there is no user');
+            let allErrors = [];
+            allErrors.push( { location: 'body', param: '', msg: 'Username or Password is Incorrect!', value: ''});
+            console.log(allErrors);
+            return res.render('login', {page: 'login', errors: allErrors});
+        } 
+        req.login(user, err => {
+            if (err) console.error(err);
+            return res.redirect('/');
+        });
+    })(req, res, next);
+});
 
 app.get('/logout', (req, res) => {
     req.logout();
@@ -153,58 +148,43 @@ app.post('/register', async (req, res) => {
         allErrors.push(error);
     }
 
-    await firebase.database().ref("users/").orderByChild("username")
-    .equalTo(username).once("value", snapshot =>{
+    await firebase.database().ref('users/').orderByChild('username')
+    .equalTo(username).once('value', snapshot =>{
         if(snapshot.exists()){
             allErrors.push(
-                {
-                    location: 'body',
-                    param: 'username', 
-                    msg: 'Username already exists', 
-                    value: ''
-                }
+                { location: 'body', param: 'username', msg: 'Username already exists', value: ''}
             );
         }
     });
 
     if (allErrors[0]){
-        res.render(
-            'register', 
-            {title: 'Registration Error', 
-            errors: allErrors
-            }
-        );
+        res.render('register', {page: 'registration error', errors: allErrors});
     }else{
         await bcrypt.hash(password, saltRounds, (err, hash) => {
-            firebase.database().ref("users/").push(
-                {
-                    username: username,
-                    password: hash
-                }
-            )
+            firebase.database().ref('users/').push(
+                { username: username, password: hash }
+            );
 
-            firebase.database().ref("users/")
-            .once("child_added", childSnapshot => {
-                const user_id = childSnapshot.key;
-                req.login(user_id, err => {
-                    res.redirect("/");
+            firebase.database().ref('users/').once('child_added', childSnapshot => {
+                const user = childSnapshot.val();
+                req.login(user, err => { 
+                    res.redirect('/'); 
                 });
             });   
         });
     }
 });
 
-passport.serializeUser((user_id, done) => {
-    done(null, user_id);
+passport.serializeUser((user, done) => {
+    done(null, user);
 });
 
-passport.deserializeUser((user_id, done) => {
-    done(null, user_id);
+passport.deserializeUser((user, done) => {
+    done(null, user);
 });
 
 function authenticationMiddleware(){
     return (req, res, next) => {
-        /*console.log(`req.session.passport.user: ${JSON.stringify(req.session.passport)}`);*/
         if (req.isAuthenticated()) return next();
         res.redirect('/login');
     };
