@@ -26,14 +26,16 @@ socket.on('chat-message', data => {
 //     appendMessage(`${name} disconnected`);
 // })
 
-messageForm.addEventListener('submit', e => {
+messageForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const message = messageInput.value;
-    if (message.trim() === '') return;
-    if (message.length > 2000) return;
-    appendMessage(`${user.username}: ${message}`, true);
-    socket.emit("send-chat-message", message);
-    messageInput.value = '';
+    const res = await fetch(`/messagecheck/${message}`);
+    const isValid = Boolean(await res.json());
+    if (isValid){
+        appendMessage(`${user.username}: ${message}`, true);
+        socket.emit("send-chat-message", message);
+        messageInput.value = '';
+    }
 })
 
 function appendMessage(message, isOwnMessage = false){

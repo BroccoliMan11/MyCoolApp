@@ -74,6 +74,13 @@ app.get('/userinfo', (req, res) => {
     res.json(req.user);
 });
 
+app.post('/messagecheck/:message', (req, res) => {
+    const message = req.params.message;
+    if (message.trim() === '') return res.json(false);
+    if (message.length > 2000) return res.json(false);
+    res.json(true);
+});
+
 app.get('/register', (req, res) => {
     res.render('register', {page: 'register'});
 });
