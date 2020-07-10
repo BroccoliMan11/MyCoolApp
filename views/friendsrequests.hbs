@@ -1,0 +1,15 @@
+<div id="request-container">
+    {{#if requestFriendsInfo}}
+        {{#each requestFriendsInfo}}
+            <div class="request" user_id="{{this.id}}">
+                <p>{{this.id}} {{this.username}}</p>
+                <button onclick='acceptFriendRequest("{{this.id}}")'>Accept</button>
+                <button onclick='rejectFriendRequest("{{this.id}}")'>Reject</button>
+            </div>
+        {{/each}}
+    {{else}}
+        No friend requests
+    {{/if}}
+</div>
+
+<script src="/public/js/friendsrequests.js"></script>

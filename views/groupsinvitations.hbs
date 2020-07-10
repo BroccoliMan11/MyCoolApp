@@ -1,0 +1,15 @@
+<div id="request-container">
+    {{#if inviteGroupsInfo}}
+        {{#each inviteGroupsInfo}}
+            <div class="request" group_id="{{this.id}}">
+                <p>{{this.id}} {{this.name}}</p>
+                <button onclick='acceptGroupInvitation("{{this.id}}")'>Accept</button>
+                <button onclick='rejectGroupInvitation("{{this.id}}")'>Reject</button>
+            </div>
+        {{/each}}
+    {{else}}
+        No group invitations
+    {{/if}}
+</div>
+
+<script src="/public/js/groupinvitations.js"></script>

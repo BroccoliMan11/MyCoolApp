@@ -1,53 +1,43 @@
 const socket = io();
 
-const messageContainer = document.getElementById('message-container');
-const messageForm = document.getElementById("send-container");
-const messageInput = document.getElementById("message-input");
+const messageContainer = document.querySelector('#message-container');
+const messageForm = document.querySelector("#send-container");
+const messageInput = document.querySelector("#message-input");
 
-let user;
+(async function joinChannel() {
+    const selectedChannelId = window.location.pathname.split('/').pop();
+    const response = await fetch('/getuserinfo');
+    const user = await response.json();
+    socket.emit('joinChannel', {user: user, channelId: selectedChannelId});
+})();
 
-async function addUser(){
-    const res = await fetch('/userinfo');
-    user = await res.json();
-    // appendMessage(`${user.username} joined!`);
-    socket.emit('new-user', user);
-}
-addUser();
+socket.on('message', async message => {
+    const isAtBottom = (messageContainer.scrollHeight - messageContainer.scrollTop === messageContainer.clientHeight);
+    outputMessage(message);
+    if (isAtBottom){
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+});
 
-socket.on('chat-message', data => {
-    appendMessage(`${data.username}: ${data.message}`);
-})
+socket.on('loadMessages', allMessages => {
+    allMessages.forEach(message => outputMessage(message));
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+});
 
-// socket.on('user-connected', name => {
-//     appendMessage(`${name} connected`);
-// })
-
-// socket.on('user-disconnected', name =>{
-//     appendMessage(`${name} disconnected`);
-// })
-
-messageForm.addEventListener('submit', async (e) => {
+messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const message = messageInput.value;
-    const res = await fetch(`/messagecheck/${message}`);
-    const isValid = Boolean(await res.json());
-    if (isValid){
-        appendMessage(`${user.username}: ${message}`, true);
-        socket.emit("send-chat-message", message);
-        messageInput.value = '';
-    }
-})
+    socket.emit('chatMessage', message);
+    messageInput.value = '';
+    messageContainer.scrollTop = messageContainer.scrollHeight;
+});
 
-function appendMessage(message, isOwnMessage = false){
-    const isAtBottom = 
-    messageContainer.scrollHeight - messageContainer.scrollTop 
-    == messageContainer.clientHeight;
-
+function outputMessage(message) {
     const messageElement = document.createElement('div');
-    messageElement.innerText = message;
+    messageElement.innerText = `${message.user.username} (${message.time}): ${message.text}`;
     messageContainer.append(messageElement);
+}
 
-    if (isAtBottom || isOwnMessage) {
-        messageContainer.scrollTo(0, messageContainer.scrollHeight);
-    }
+function switchChannel(channelGroup, channelId){
+    window.location.replace(`/${channelGroup}/all/${channelId}`);
 }

@@ -1,96 +1,63 @@
-//app setup
-const express = require('express'); //npm i express
+//parse environment variables
+require('dotenv').config();
+
+//for combinding path strings
+const path = require('path');
+//create a server
+const express = require('express');
 const app = express();
+
+//create websocket and link to server
+const http = require('http');
+const server = http.createServer(app);
+const socketio = require('socket.io');
+const io = socketio(server);
+require('./socketevents')(io);
+
+//static folder
+app.use('/public', express.static(path.join(__dirname, 'public')));
+
 const PORT = process.env.PORT || 3000;
+server.listen(PORT, console.log(`Server is running on port ${PORT}`));
 
-//error handling packages
-const createError = require('http-errors');
+//get express-validator
+const expressValidator = require('express-validator');
+app.use(expressValidator());
 
-const cookieParser = require('cookie-parser');
-const logger = require('morgan');
+// //get body parser
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false}));
 
-//socket setup
-const http = require('http').Server(app); 
-const io = require('socket.io')(http);  //npm i socket.io
-http.listen(PORT, console.log(`listening at port ${PORT}`));
+// //get passport
+const passport = require('./utils/passport');
 
-//reference routes
-const indexRouter = require('./routes/index');
-const usersRouter = require('./routes/users');
+app.use(require('./utils/session'));
 
-//use server routes
-app.use('/', indexRouter);
-app.use('/user', usersRouter);
+app.use(passport.initialize());
+app.use(passport.session());
 
-app.use(logger('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-
-//use public css/js
-app.use('/public', express.static('public'));
-
-//view engine & handlebars setup
-const exphbs = require('express-handlebars'); //npm i handlebars-express
-//const hbshelpers = require('handlebars-helpers'); //npm i handlebars-helpers
-//const multihelpers = hbshelpers();
-
-const hbs = exphbs.create({
-    helpers: require('./hbs-helpers'),
-    layoutsDir: __dirname + '/views/layouts',
-    partialsDir: __dirname + '/views/partials',
-    extname: 'hbs',
-    defaultLayout: 'index'
+//set "isAuthenticated" in handlebars files
+app.use((req, res, next) => {
+    res.locals.isAuthenticated = req.isAuthenticated();
+    next();
 });
 
+//use routes
+app.use(
+    require('./routes/home'),
+    require('./routes/register'),
+    require('./routes/login'),
+    require('./routes/profile'),
+    require('./routes/friends'),
+    require('./routes/groups'),
+    require('./routes/logout'),
+    require('./routes/getuserinfo')
+);
+
+//view engine setup
+const hbs = require('./handlebars');
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 
-//catch 404
-app.use((req, res, next) => {
-    next(createError(404));
-});
-
-app.use((err, req, res, next) => {
-    //error messages in development
-    res.locals.message = err.message;
-    res.locals.error = req.app.get('env') === 'development' ? err : {};
-
-        console.log(res.locals.error);
-
-    //render error page
-    res.render('error', {layout: false});
-});
-
-const users = {}
-
-io.on('connection', socket => {
-    socket.on('new-user', user => {
-        users[socket.id] = user.username;
-        // socket.broadcast.emit('user-connected', user.username);
-    })
-    socket.on('send-chat-message', message => {
-        socket.broadcast.emit(
-            'chat-message',    
-            {
-                message: message, 
-                username: users[socket.id]
-            }
-        );
-    })
-    socket.on('disconnect', () => {
-        // socket.broadcast.emit('user-disconnected', users[socket.id]);
-        delete users[socket.id];
-    })
-});
-
 module.exports = app;
-
-
-
-
-
-
-
-
-

@@ -1,0 +1,19 @@
+{{#if friendsInfo}}
+    <div id="friends-container">
+        {{#each friendsInfo}}
+            <div class="friend" onclick="switchChannel('friends','{{this.channelId}}')">
+                <p>{{this.id}} {{this.username}}</p>
+            </div>
+        {{/each}}
+    </div>
+    <div id="message-container" class="message-log"></div>
+    <form id="send-container">
+        <input type="text" name="message" id="message-input">
+        <button type="submit" id="send-button">Send</button>
+    </form>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/public/js/chat.js"></script>
+{{else}}
+    <p>You need friends</p>
+{{/if}}

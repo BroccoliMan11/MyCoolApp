@@ -1,4 +1,4 @@
-const firebase = require('firebase'); //npm i firebase
+const firebase = require('firebase');
 
 const firebaseConfig = {
     apiKey: process.env.DB_API_KEY ,
@@ -14,7 +14,3 @@ const firebaseConfig = {
 const db = firebase.initializeApp(firebaseConfig);
 
 module.exports = db;
-
-
-
-

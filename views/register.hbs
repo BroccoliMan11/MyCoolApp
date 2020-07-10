@@ -1,29 +1,25 @@
-<div class="container">
-    <h1 style="margin-top: 2em;">{{title}}</h1>
-
-    <div>
-        {{#if errors}}
-            {{#each errors}}
-                <div class="alert alert-danger">
-                    {{this.msg}}
-                </div>
-            {{/each}}
-        {{/if}}
-    </div>
-
-    <form method="POST" action="/register">
-        <div class="form-group">
-            <label for="username">Username</label>
-            <input type="text" name="username" class="form-control" placeholder="Username">
-        </div>
-        <div class="form-group">
-            <label for="password">Password</label>
-            <input type="password" name="password" class="form-control" placeholder="Password">
-        </div>
-        <div class="form-group">
-            <label for="passwordMatch">Re-Enter Password</label>
-            <input type="password" name="passwordMatch" class="form-control" placeholder="Password">
-        </div>
-        <button type="submit" class="btn btn-primary">Submit</button>
-    </form>
+<div>
+    {{#if errors}}
+        {{#each errors}}
+            <div class="alert alert-danger">
+                {{this.msg}}
+            </div>
+        {{/each}}
+    {{/if}}
 </div>
+
+<form method="POST" action="/register">
+    <div class="form-group">
+        <label for="username">Username</label>
+        <input type="text" name="username" class="form-control" placeholder="Username">
+    </div>
+    <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" name="password" class="form-control" placeholder="Password">
+    </div>
+    <div class="form-group">
+        <label for="passwordMatch">Re-Enter Password</label>
+        <input type="password" name="passwordMatch" class="form-control" placeholder="Password">
+    </div>
+    <button type="submit" class="btn btn-primary">Submit</button>
+</form>

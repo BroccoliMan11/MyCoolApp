@@ -1,0 +1,26 @@
+.message-log {
+    width: 500px;
+    height: 300px;
+    background-color:greenyellow;
+    overflow: auto;
+}
+
+#friends-container {
+    overflow: auto;
+    border: black solid 1px;
+}
+
+.friend {
+    border: black solid 1px;
+    padding: 10px;
+}
+
+#request-container {
+    overflow: auto;
+    border: black solid 1px;
+}
+
+.request {
+    border: black solid 1px;
+    padding: 10px;
+}

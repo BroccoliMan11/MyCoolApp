@@ -1,0 +1,24 @@
+{{#if groupsInfo}}
+    <div id="friends-container">
+        {{#each groupsInfo}}
+            <div class="friend" onclick="switchChannel('groups','{{this.id}}')">
+                <p>{{this.id}} {{this.name}}</p>
+            </div>
+        {{/each}}
+    </div>
+    <div id="message-container" class="message-log"></div>
+    <form id="send-container">
+        <input type="text" name="message" id="message-input">
+        <button type="submit" id="send-button">Send</button>
+    </form>
+    <a href="/groups/all/{{selectedChannelId}}/invite">Invite</a>
+    <a href="/groups/all/{{selectedChannelId}}/leave">Leave</a>
+    {{#iff role '===' 'leader'}}
+        <a href="/groups/all/{{../selectedChannelId}}/kick">Kick</a>
+    {{/iff}}
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="/public/js/chat.js"></script>
+{{else}}
+    <p>You need a group to join!</p>
+{{/if}}
