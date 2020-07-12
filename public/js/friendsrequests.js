@@ -25,6 +25,6 @@ function removeRequestDiv(id){
     const requestContainer = document.querySelector("#request-container");
     requestContainer.removeChild(div);
     if (requestContainer.childElementCount === 0){
-        requestContainer.textContent = "no friend requests"
+        requestContainer.textContent = "No friend requests"
     }
 }

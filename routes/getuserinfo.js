@@ -1,12 +1,12 @@
 const express = require('express');
 const router = express.Router();
 
-const getUserInfo = require('../utils/getuserinfo');
-const authtenicationMiddleware = require('../utils/authmidfunc');
+const { authenticationMiddleware } = require('../utils/middlewares');
 
-router.get('/getuserinfo', authtenicationMiddleware(), async (req, res) => {
-    const userInfo = await getUserInfo(req.user);
-    res.json({id: userInfo.id, username: userInfo.username});
+router.get('/getuserinfo', authenticationMiddleware(), async (req, res) => {
+    const userInfo = req.user;
+    delete userInfo.password;
+    res.json(userInfo);
 })
 
 module.exports = router

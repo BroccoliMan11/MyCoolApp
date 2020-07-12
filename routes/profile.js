@@ -1,17 +1,15 @@
 const express = require('express');
 const router = express.Router();
 
-const getUserInfo = require('../utils/getuserinfo');
-const authenticationMiddleware = require('../utils/authmidfunc');
+const { authenticationMiddleware } = require('../utils/middlewares');
 
-router.get('/profile', authenticationMiddleware(), async (req, res) => {
-    const userInfo = await getUserInfo(req.user);
+router.get('/profile', authenticationMiddleware(), (req, res) => {
     return res.render(
         'profile',
         {
             page: 'profile',
-            username: userInfo.username,
-            password: userInfo.password
+            username: req.user.username,
+            password: req.user.password
         }
     );
 });

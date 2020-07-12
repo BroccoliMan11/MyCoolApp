@@ -1,7 +1,7 @@
 const userSockets = [];
 
-function userJoin(socketId, user, channelId) {
-    const userSocket = { socketId: socketId, user: user, channelId: channelId };
+function userJoin(socketId, userId, channelId) {
+    const userSocket = { socketId: socketId, userId: userId, channelId: channelId };
     userSockets.push(userSocket);
     return userSocket;
 }

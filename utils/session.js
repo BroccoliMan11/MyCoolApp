@@ -1,10 +1,10 @@
 const session = require('express-session');
-const firebase = require('../database');
+const db = require('../database');
 const FirebaseStore = require('connect-session-firebase')(session);
 
 module.exports = session({
     store: new FirebaseStore({
-        database: firebase.database()
+        database: db
     }),
     secret: 'hdakhdewkfsdnbhjsegyw',
     resave: false,

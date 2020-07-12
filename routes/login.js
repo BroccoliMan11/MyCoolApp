@@ -9,12 +9,13 @@ router.get('/login', (req, res,) => {
 
 router.post('/login', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
+        console.log('authenticate');
         if (err) console.error(err);
         if (!user) {
-            const allErrors = [{ location: 'body', param: '', msg: 'Username or Password is Incorrect!', value: ''}];
-            return res.render('login', {page: 'login', errors: allErrors});
+            return res.render('login', {page: 'login', error: 'Username or Password is Incorrect!'});
         } 
         req.login(user, err => {
+            console.log('login');
             if (err) console.error(err);
             return res.redirect('/');
         });

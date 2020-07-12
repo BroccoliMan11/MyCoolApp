@@ -1,375 +1,330 @@
 const express = require('express');
 const router = express.Router();
 
-const firebase = require('../database');
+const { authenticationMiddleware, noGroupInvitations, noGroups, 
+    notInGroup, notGroupLeader, groupIdNotInInvitations } = require('../utils/middlewares');
 
-const authenticationMiddleware = require('../utils/authmidfunc');
-const getUserInfo = require('../utils/getuserinfo');
-const getuserinfo = require('../utils/getuserinfo');
+const { createNewChannel, joinGroup, sendGroupInvitation, 
+    removeGroupInvitation, leaveGroup, deleteGroup, promoteGroupMember } = require('../utils/dbmanipulate');
 
+const { getGroupsInfoFormatted, getGroupInfo, getGroupInvitationsInfoFormatted, 
+    findFriendByUsername, findGroupMemberByUsername} = require('../utils/dbretrieve');
+
+//
 router.get('/groups', authenticationMiddleware(), (req, res) => {
     return res.redirect('/groups/all')
 });
 
+//
 router.get('/groups/all', authenticationMiddleware(), async (req, res) => {
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groups) {
+    if (!req.user.groups) {
         return res.render('groupsall', { page: 'groups', subpage: 'all' });
     }
-
-    const firstChannelId = Object.values(userInfo.groups)[0];
+    const firstChannelId = Object.values(req.user.groups)[0];
     return res.redirect(`/groups/all/${firstChannelId}`);
 });
 
-router.get('/groups/all/:channelId', authenticationMiddleware(), async (req, res) => {
-    const selectedChannelId = req.params.channelId;
-    const userInfo = await getUserInfo(req.user);
+//
+router.get('/groups/all/:groupId', 
 
-    if (!userInfo.groups){
-        return res.render('groupsall', { page: 'groups', subpage: 'all' });
-    }  
-
-    const userGroupChannelIds = Object.values(userInfo.groups);
-
-    if (!userGroupChannelIds.includes(selectedChannelId)){
-        return res.status(404).send('You are not associated with that channel ID!');
-    }
-
-    const groupsInfo = await Promise.all(Object.values(userInfo.groups)
-    .map(async (channelId) => {
-        const groupInfo = await firebase.database().ref(`channels/${channelId}`).once('value')
-        return groupInfo.val();
-    }));
-
-    const selectedGroupInfo = await (await firebase.database().ref(`channels/${selectedChannelId}`).once('value')).val();
-
-    const role = selectedGroupInfo.members[userInfo.id];
+    authenticationMiddleware(), 
+    noGroups(), 
+    notInGroup(),  
     
+    async(req, res) => {
+
+        const selectedGroupId = req.params.groupId;
+        const groupsInfo = await getGroupsInfoFormatted(req.user.groups)
+        const userGroupRole = (await getGroupInfo(selectedGroupId)).members[req.user.id];
+
+        return res.render(
+            'groupsall', 
+            { 
+                page: 'groups', 
+                subpage: 'all', 
+                groupsInfo: groupsInfo, 
+                selectedChannelId: selectedGroupId,
+                role: userGroupRole
+            }
+        );
+    }
+);
+
+//
+router.get('/groups/all/:groupId/invite', 
+
+    authenticationMiddleware(), 
+    noGroups(), 
+    notInGroup(), 
+    
+    (req, res) => {
+        const selectedGroupId = req.params.groupId;
+        return res.render('groupsinvite', { page: 'groups', subpage: 'all', selectedChannelId: selectedGroupId });
+    }
+);
+
+//
+router.get('/groups/invitations', authenticationMiddleware(), async (req, res) => {
+    if (!req.user.groupInvitations){
+        return res.render('groupsinvitations', { page: 'groups', subpage: 'invitations' }); 
+    }
+    const groupInvitationsInfo = await getGroupInvitationsInfoFormatted(req.user.groupInvitations);
     return res.render(
-        'groupsall', 
+        'groupsinvitations', 
         { 
             page: 'groups', 
-            subpage: 'all', 
-            groupsInfo: groupsInfo, 
-            selectedChannelId: selectedChannelId,
-            role: role
+            subpage: 'invitations', 
+            inviteGroupsInfo: groupInvitationsInfo 
         }
     );
 });
 
-router.get('/groups/all/:channelId/invite', authenticationMiddleware(), (req, res) => {
-    const selectedChannelId = req.params.channelId;
-    return res.render('groupsinvite', { page: 'groups', subpage: 'all', selectedChannelId: selectedChannelId });
-});
-
-router.get('/groups/invitations', authenticationMiddleware(), async (req, res) => {
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groupInvitations){
-        return res.render('groupsinvitations', { page: 'groups', subpage: 'invitations' });
-    } 
-
-    const inviteGroupsInfo = await Promise.all(Object.values(userInfo.groupInvitations).map(async (groupId) => {
-        const groupInfo = await (await firebase.database().ref(`channels/${groupId}`).once('value')).val();
-        return groupInfo
-    }));
-
-    return res.render('groupsinvitations', { page: 'groups', subpage: 'invitations', inviteGroupsInfo: inviteGroupsInfo });
-});
-
+//
 router.get('/groups/create', authenticationMiddleware(), (req, res) => {
     return res.render('groupscreate', { page: 'groups', subpage: 'create' });
 });
 
-router.post('/groups/create', authenticationMiddleware(), (req, res) => {
+//
+router.post('/groups/create', authenticationMiddleware(), async (req, res) => {
     const groupName = req.body.groupName;
-    const groupChannel = { name: groupName, channelType: 'Group', members: { [`${req.user}`]: 'leader'} };
-    const groupAdding = firebase.database().ref('/channels').push(groupChannel);
-    firebase.database().ref(`channels/${groupAdding.key}/id`).set(groupAdding.key);
-    firebase.database().ref(`users/${req.user}/groups`).push(groupAdding.key);
+    const creatingChannelData = { name: groupName, channelType: 'Group' };
+    const createGroup = await createNewChannel(creatingChannelData);
+    await joinGroup(req.user.id, createGroup.id, 'leader');
     return res.render('groupscreate', { page: 'groups', subpage: 'create', successMessage: `${groupName} has been created!`});
 });
 
-router.post('/groups/all/:channelId/invite', authenticationMiddleware(), async (req, res) => {
-    const selectedChannelId = req.params.channelId
-    const usernameFinding = req.body.friendName
-    const userInfo = await getuserinfo(req.user);
+//
+router.post('/groups/all/:groupId/invite', 
 
-    if (!userInfo.groups){
-        return res.status(404).send('You are currently in no groups!');
-    }
-
-    const userGroupChannelIds = Object.values(userInfo.groups);
-
-    if (!userGroupChannelIds.includes(selectedChannelId)){
-        return res.status(404).send(`You are not associated with any channel with an ID of ${selectedChannelId}!`);
-    }
-
-    if (!userInfo.friends){
-        return res.render('groupsinvite', { page: 'groups', subpage: 'all', searchError: 'You have no friends to invite!', selectedChannelId: selectedChannelId });
-    }
-
-    let invitingFriendInfo;
-
-    for (friendId of Object.keys(userInfo.friends)){
-        const friendInfo = await getUserInfo(friendId);
-        if (friendInfo.username === usernameFinding){
-            invitingFriendInfo = friendInfo;
-            break;
-        }
-    }
-
-    if (!invitingFriendInfo){
-        return res.render('groupsinvite', { page: 'groups', subpage: 'all', searchError: `${usernameFinding} is not in your friends list OR is not a valid user!`, selectedChannelId: selectedChannelId });
-    }
-
-    if (invitingFriendInfo.groupInvitations){
-        if (Object.values(invitingFriendInfo.groupInvitations).includes(selectedChannelId)){
-            return res.render('groupsinvite', { page: 'groups', subpage: 'all', searchError: `An invitation was already sent to ${usernameFinding}!`, selectedChannelId: selectedChannelId} );
-        }
-    }
-
-    const groupMemberList = await (await firebase.database().ref(`channels/${selectedChannelId}/members`).once('value')).val();
+    authenticationMiddleware(), 
+    noGroups(), 
+    notInGroup(), 
     
-    if (Object.keys(groupMemberList).includes(invitingFriendInfo.id)){
-        return res.render('groupsinvite', { page: 'groups', subpage: 'all', searchError: `${usernameFinding} is already in this group!`, selectedChannelId: selectedChannelId} );
-    }
-
-    firebase.database().ref(`users/${invitingFriendInfo.id}/groupInvitations`).push(selectedChannelId);
-
-    return res.render('groupsinvite', { page: 'groups', subpage: 'all', searchError: `${usernameFinding} was invited to the group!`, selectedChannelId: selectedChannelId });
-});
-
-function getKeyByValue(object, value){
-    return Object.keys(object).find(key => object[key] === value);
-}
-
-async function removeFromGroupInvitations(userId, removingId)
-{
-    const userInfo = await getUserInfo(userId);
-    const removingObjKey = getKeyByValue(userInfo.groupInvitations, removingId);
-    firebase.database().ref(`users/${userId}/groupInvitations/${removingObjKey}`).remove();
-}
-
-router.post('/groups/invitations/accept/:groupId', authenticationMiddleware(), async (req, res) => {
-    const groupId = req.params.groupId;
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groupInvitations){
-        return res.status(404).send('You have no group invitations to accept!');
-    }
-
-    const userGroupInvitationIds = Object.values(userInfo.groupInvitations);
-
-    if (!userGroupInvitationIds.includes(groupId)) {
-        return res.status(404).send('Group ID is not in group invitations');
-    }
-
-    firebase.database().ref(`users/${req.user}/groups`).push(groupId);
-    firebase.database().ref(`channels/${groupId}/members/${req.user}`).set('member');
-    removeFromGroupInvitations(req.user, groupId);
-
-    return res.status(200).send('Group was added to group list!');
-});
-
-router.post('/groups/invitations/reject/:groupId', authenticationMiddleware(), async (req, res) => {
-    const groupId = req.params.groupId;
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groupInvitations){
-        return res.status(404).send('You have no group invitations to reject!');
-    }
-
-    removeFromGroupInvitations(req.user, groupId);
-    
-    return res.status(200).send('Group was rejected');
-});
-
-router.get('/groups/all/:groupId/leave', authenticationMiddleware(), async (req, res) => {
-    const groupId = req.params.groupId;
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groups){
-        return res.status(404).send('You are currently in no group!');
-    }
-
-    const userGroupIds = Object.values(userInfo.groups);
-
-    if (!userGroupIds.includes(groupId)){
-        return res.status(404).send(`You are not associated with a group with ID of ${groupId}`);
-    }
-
-    const groupMemberListRef = await firebase.database().ref(`channels/${groupId}/members`).once('value');
-    
-    if (groupMemberListRef.val()[req.user] === 'leader'){
-        const amountOfMembers = Object.entries(groupMemberListRef.val()).length;
-        if (amountOfMembers > 1){
-            return res.redirect(`/groups/all/${groupId}/leave/leaderselect`);
-        } else {
-            const removeObjKey = getKeyByValue(userInfo.groups, groupId);
-            firebase.database().ref(`users/${req.user}/groups/${removeObjKey}`).remove();
-            firebase.database().ref(`channels/${groupId}`).remove();
-            return res.redirect('/groups/all');
+    async (req, res) => {
+        const selectedGroupId = req.params.groupId;
+        if (!req.user.friends){
+            return res.render(
+                'groupsinvite', 
+                { 
+                    page: 'groups', 
+                    subpage: 'all', 
+                    searchError: 'You have no friends to invite!', 
+                    selectedChannelId: selectedGroupId
+                }
+            );
         }
-    }
-
-    const removeObjKey = getKeyByValue(userInfo.groups, groupId);
-    firebase.database().ref(`users/${req.user}/groups/${removeObjKey}`).remove();
-    firebase.database().ref(`channels/${groupId}/members/${req.user}`).remove();
-
-    return res.redirect('/groups/all');
-});
-
-router.get('/groups/all/:groupId/leave/leaderselect', authenticationMiddleware(), async (req, res) => {
-    const groupId = req.params.groupId;
-
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groups){
-        return res.status(404).send('You are currently in no group!');
-    }
-
-    const userGroupIds = Object.values(userInfo.groups);
-
-    if (!userGroupIds.includes(groupId)){
-        return res.status(404).send(`You are not associated with a group with ID of ${groupId}`);
-    }
-
-    const groupMemberListRef = 
-    await firebase.database().ref(`channels/${groupId}/members`).once('value');
-
-    if (groupMemberListRef.val()[req.user] !== 'leader'){
-        return res.status(404).send(`You are not the leader of the group with ID of ${groupId}`);
-    }
-
-    return res.render('groupsleaveleaderselect', { page: 'groups', subpage: 'all', selectedChannelId: groupId });
-});
-
-router.post('/groups/all/:groupId/leave/leaderselect', authenticationMiddleware(), async(req, res) => {
-    const groupId = req.params.groupId;
-
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groups){
-        return res.status(404).send('You are currently in no group!');
-    }
-
-    const userGroupIds = Object.values(userInfo.groups);
-
-    if (!userGroupIds.includes(groupId)){
-        return res.status(404).send(`You are not associated with a group with ID of ${groupId}`);
-    }
-
-    const groupMemberListRef = 
-    await firebase.database().ref(`channels/${groupId}/members`).once('value');
-
-    if (groupMemberListRef.val()[req.user] !== 'leader'){
-        return res.status(404).send(`You are not the leader of the group with ID of ${groupId}`);
-    }
-
-    const groupMemberName = req.body.groupMemberName;
-
-    let promotingMemberId;
-
-    for await (memberId of Object.keys(groupMemberListRef.val())){
-        const memberInfo = await getUserInfo(memberId);
-        if (memberInfo.username === groupMemberName){
-            promotingMemberId = memberId;
-            break;
+        const friendUsername = req.body.friendName;
+        const friendFoundByUsername = await findFriendByUsername(friendUsername, req.user.friends);
+        if (!friendFoundByUsername){
+            return res.render(
+                'groupsinvite', 
+                { 
+                    page: 'groups', 
+                    subpage: 'all', 
+                    searchError: `${friendUsername} is not in your friends list!`, 
+                    selectedChannelId: selectedGroupId
+                }
+            );
         }
-    }
-
-    if (!promotingMemberId){
+        if (friendFoundByUsername.groupInvitations){
+            const friendGroupIds = Object.values(friendFoundByUsername.groupInvitations);
+            if (friendGroupIds.includes(selectedGroupId)){
+                return res.render(
+                    'groupsinvite', 
+                    { 
+                        page: 'groups', 
+                        subpage: 'all', 
+                        searchError: `An invitation was already sent to ${friendUsername}!`,
+                        selectedChannelId: selectedGroupId
+                    } 
+                );
+            }
+        }
+        const selectedGroupMembers = (await getGroupInfo(selectedGroupId)).members;
+        if (selectedGroupMembers[friendFoundByUsername.id]){
+            return res.render(
+                'groupsinvite', 
+                { 
+                    page: 'groups', 
+                    subpage: 'all', 
+                    searchError: `${friendUsername} is already in this group!`, 
+                    selectedChannelId: selectedGroupId
+                } 
+            );
+        }
+        sendGroupInvitation(friendFoundByUsername.id, selectedGroupId);
         return res.render(
-            'groupsleaveleaderselect', 
+            'groupsinvite', 
             { 
                 page: 'groups', 
                 subpage: 'all', 
-                selectedChannelId: groupId,  
-                searchError: 'There is not member group member with that username!'
+                searchError: `${friendUsername} was invited to the group!`, 
+                selectedChannelId: selectedGroupId 
             }
-        )
+        );
     }
+);
 
-    firebase.database().ref(`channels/${groupId}/members/${promotingMemberId}`).set('leader');
+//mid
+router.post('/groups/invitations/accept/:groupId', 
 
-    const removeObjKey = getKeyByValue(userInfo.groups, groupId);
-    firebase.database().ref(`users/${req.user}/groups/${removeObjKey}`).remove();
-    firebase.database().ref(`channels/${groupId}/members/${req.user}`).remove();
-
-    return res.redirect('/groups/all');
-});
-
-router.get('/groups/all/:groupId/kick', authenticationMiddleware(), async (req, res) => {
-    const groupId = req.params.groupId;
-
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groups){
-        return res.status(404).send('You are currently in no group!');
+    authenticationMiddleware(), 
+    noGroupInvitations(),
+    groupIdNotInInvitations(),
+    
+    async (req, res) => {
+        const selectedGroupId = req.params.groupId;
+        await joinGroup(req.user.id, selectedGroupId, 'member');
+        await removeGroupInvitation(req.user.id, selectedGroupId);
+        return res.status(200).send('Group was added to group list!');
     }
+);
 
-    const userGroupIds = Object.values(userInfo.groups);
+//mid
+router.post('/groups/invitations/reject/:groupId', 
 
-    if (!userGroupIds.includes(groupId)){
-        return res.status(404).send(`You are not associated with a group with ID of ${groupId}`);
+    authenticationMiddleware(),
+    noGroupInvitations(),
+    
+    async (req, res) => {
+        const selectedGroupId = req.params.groupId;
+        await removeGroupInvitation(req.user.id, selectedGroupId);
+        return res.status(200).send('Group was rejected');
     }
+);
 
-    const groupMemberListRef = 
-    await firebase.database().ref(`channels/${groupId}/members`).once('value');
+//mid
+router.get('/groups/all/:groupId/leave', 
 
-    if (groupMemberListRef.val()[req.user] !== 'leader'){
-        return res.status(404).send(`You are not the leader of the group with ID of ${groupId}`);
-    }
+    authenticationMiddleware(), 
+    noGroups(),
+    notInGroup(),
 
-    return res.render('groupskick', { page: 'groups', subpage: 'all', selectedChannelId: groupId });
-});
-
-router.post('/groups/all/:groupId/kick', authenticationMiddleware(), async (req, res) => {
-    const groupId = req.params.groupId;
-
-    const userInfo = await getUserInfo(req.user);
-
-    if (!userInfo.groups){
-        return res.status(404).send('You are currently in no group!');
-    }
-
-    const userGroupIds = Object.values(userInfo.groups);
-
-    if (!userGroupIds.includes(groupId)){
-        return res.status(404).send(`You are not associated with a group with ID of ${groupId}`);
-    }
-
-    const groupMemberListRef = 
-    await firebase.database().ref(`channels/${groupId}/members`).once('value');
-
-    if (groupMemberListRef.val()[req.user] !== 'leader'){
-        return res.status(404).send(`You are not the leader of the group with ID of ${groupId}`);
-    }
-
-    const groupMemberName = req.body.groupMemberName;
-
-    let kickingMemberInfo;
-
-    for await (memberId of Object.keys(groupMemberListRef.val())){
-        const memberInfo = await getUserInfo(memberId);
-        if (memberInfo.username === groupMemberName){
-            kickingMemberInfo = memberInfo;
-            break;
+    async (req, res) => {
+        const selectedGroupId = req.params.groupId;
+        const selectedGroupMembers = (await getGroupInfo(selectedGroupId)).members
+        if (selectedGroupMembers[req.user.id] === 'leader'){
+            if (Object.entries(selectedGroupMembers).length > 1){
+                return res.redirect(`/groups/all/${selectedGroupId}/leave/leaderselect`);
+            } else {
+                await deleteGroup(selectedGroupId);
+            }
+        } else {
+            leaveGroup(req.user.id, selectedGroupId);
         }
+        return res.redirect('/groups/all');
     }
+);
 
-    if (!kickingMemberInfo){
-        return res.render('groupskick', { page: 'groups', subpage: 'all', selectedChannelId: groupId, searchError: `${groupMemberName} is not a valid user to kick!`});
+router.get('/groups/all/:groupId/leave/leaderselect', 
+
+    authenticationMiddleware(), 
+    noGroups(),
+    notInGroup(),
+    notGroupLeader(),
+    
+    (req, res) => {
+        const selectedGroupId = req.params.groupId;
+        return res.render('groupsleaveleaderselect', { page: 'groups', subpage: 'all', selectedChannelId: selectedGroupId });
     }
+);
 
-    firebase.database().ref(`channels/${groupId}/members/${kickingMemberInfo.id}`).remove();
-    const removeObjKey = getKeyByValue(kickingMemberInfo.groups, groupId);
-    console.log(removeObjKey);
-    firebase.database().ref(`users/${kickingMemberInfo.id}/groups/${removeObjKey}`).remove(console.log('removed'));
+router.post('/groups/all/:groupId/leave/leaderselect',
 
-    res.render('groupskick', { page: 'groups', subpage: 'all', selectedChannelId: groupId, searchError: `${groupMemberName} was kicked!`});
-});
+    authenticationMiddleware(), 
+    noGroups(),
+    notInGroup(),
+    notGroupLeader(),
+
+    async(req, res) => {
+        const selectedGroupId = req.params.groupId;
+        const groupMemberUserame = req.body.groupMemberName;
+        const promotingMemberFoundByUsername = await findGroupMemberByUsername(selectedGroupId, groupMemberUserame);
+        if (!promotingMemberFoundByUsername){
+            return res.render(
+                'groupsleaveleaderselect', 
+                { 
+                    page: 'groups', 
+                    subpage: 'all', 
+                    selectedChannelId: selectedGroupId,  
+                    searchError: `There is no group member with a username of ${groupMemberUserame}!`
+                }
+            );
+        }
+        if (promotingMemberFoundByUsername.id === req.user.id){
+            return res.render(
+                'groupsleaveleaderselect', 
+                { 
+                    page: 'groups', 
+                    subpage: 'all', 
+                    selectedChannelId: selectedGroupId,  
+                    searchError: 'You cannot promote yourself leader when leaving!'
+                }
+            );
+        }
+        promoteGroupMember(selectedGroupId, promotingMemberFoundByUsername.id, 'leader');
+        await leaveGroup(req.user.id, selectedGroupId);
+        return res.redirect('/groups/all');
+    }
+);
+
+router.get('/groups/all/:groupId/kick', 
+
+    authenticationMiddleware(), 
+    noGroups(),
+    notInGroup(),
+    notGroupLeader(),
+
+    async (req, res) => {
+        const selectedGroupId = req.params.groupId;
+        return res.render('groupskick', { page: 'groups', subpage: 'all', selectedChannelId: selectedGroupId });
+    }
+);
+
+router.post('/groups/all/:groupId/kick', 
+
+    authenticationMiddleware(), 
+    noGroups(),
+    notInGroup(),
+    notGroupLeader(),
+    
+    async (req, res) => {
+        const selectedGroupId = req.params.groupId;
+        const groupMemberUsername = req.body.groupMemberName;
+        const kickingMemberFoundByUsername = await findGroupMemberByUsername(selectedGroupId, groupMemberUsername);
+        if (!kickingMemberFoundByUsername){
+            return res.render(
+                'groupskick', 
+                { 
+                    page: 'groups', 
+                    subpage: 'all', 
+                    selectedChannelId: selectedGroupId, 
+                    searchError: `${groupMemberUsername} is not in this group!`
+                }
+            );
+        }
+        if (kickingMemberFoundByUsername.id === req.user.id){
+            return res.render(
+                'groupskick', 
+                { 
+                    page: 'groups', 
+                    subpage: 'all', 
+                    selectedChannelId: selectedGroupId, 
+                    searchError: `You cannot kick yourself!`
+                }
+            );
+        }
+        leaveGroup(kickingMemberFoundByUsername.id, selectedGroupId);
+        res.render(
+            'groupskick', 
+            { 
+                page: 'groups', 
+                subpage: 'all', 
+                selectedChannelId: selectedGroupId, 
+                searchError: `${groupMemberUsername} was kicked!`
+            }
+        );
+    }
+);
 
 module.exports = router

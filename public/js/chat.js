@@ -8,10 +8,11 @@ const messageInput = document.querySelector("#message-input");
     const selectedChannelId = window.location.pathname.split('/').pop();
     const response = await fetch('/getuserinfo');
     const user = await response.json();
-    socket.emit('joinChannel', {user: user, channelId: selectedChannelId});
+    socket.emit('joinChannel', {userId: user.id, channelId: selectedChannelId});
 })();
 
 socket.on('message', async message => {
+    console.log(message);
     const isAtBottom = (messageContainer.scrollHeight - messageContainer.scrollTop === messageContainer.clientHeight);
     outputMessage(message);
     if (isAtBottom){
@@ -34,7 +35,7 @@ messageForm.addEventListener('submit', (e) => {
 
 function outputMessage(message) {
     const messageElement = document.createElement('div');
-    messageElement.innerText = `${message.user.username} (${message.time}): ${message.text}`;
+    messageElement.innerText = `${message.username} (${message.time.toString()}): ${message.text}`;
     messageContainer.append(messageElement);
 }
 
