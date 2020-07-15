@@ -6,9 +6,8 @@ module.exports = (io) => {
     io.on("connection", socket => {
         socket.on('joinChannel', async ({userId, channelId}) => {
             const userSocket = userJoin(socket.id, userId, channelId);
-            socket.join(userSocket.channelId);
-            const messageLog = await getGroupMessagesFormatted(userSocket.channelId);
-            if (messageLog) socket.emit('loadMessages', messageLog);
+            const messages = await getGroupMessagesFormatted(userSocket.channelId, 0, 50);
+            if (messages) socket.emit('loadMessages', messages);
         });
 
         socket.on('chatMessage', async (text) => {
@@ -23,10 +22,14 @@ module.exports = (io) => {
             const formattedMessage = { username: user.username, text: text, time: currentTime }
             const unformattedMessage = { userId: user.id, text: text, time: currentTime }
 
-            console.log(unformattedMessage);
-
             io.to(userSocket.channelId).emit('message', formattedMessage);
             addNewGroupMessage(userSocket.channelId, unformattedMessage);
+        });
+
+        socket.on('scrolledTop', async (currentIndex) => {
+            const userSocket = getCurrentUser(socket.id);
+            const messages = await getGroupMessagesFormatted(userSocket.channelId, currentIndex, 50);
+            if (messages) socket.emit('loadMessagesFromTop', messages);
         });
     });
 }

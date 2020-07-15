@@ -10,13 +10,11 @@ const { createNewChannel, joinGroup, sendGroupInvitation,
 const { getGroupsInfoFormatted, getGroupInfo, getGroupInvitationsInfoFormatted, 
     findFriendByUsername, findGroupMemberByUsername} = require('../utils/dbretrieve');
 
-//
-router.get('/groups', authenticationMiddleware(), (req, res) => {
+router.get('/', authenticationMiddleware(), (req, res) => {
     return res.redirect('/groups/all')
 });
 
-//
-router.get('/groups/all', authenticationMiddleware(), async (req, res) => {
+router.get('/all', authenticationMiddleware(), async (req, res) => {
     if (!req.user.groups) {
         return res.render('groupsall', { page: 'groups', subpage: 'all' });
     }
@@ -24,8 +22,7 @@ router.get('/groups/all', authenticationMiddleware(), async (req, res) => {
     return res.redirect(`/groups/all/${firstChannelId}`);
 });
 
-//
-router.get('/groups/all/:groupId', 
+router.get('/all/:groupId', 
 
     authenticationMiddleware(), 
     noGroups(), 
@@ -50,8 +47,7 @@ router.get('/groups/all/:groupId',
     }
 );
 
-//
-router.get('/groups/all/:groupId/invite', 
+router.get('/all/:groupId/invite', 
 
     authenticationMiddleware(), 
     noGroups(), 
@@ -63,8 +59,7 @@ router.get('/groups/all/:groupId/invite',
     }
 );
 
-//
-router.get('/groups/invitations', authenticationMiddleware(), async (req, res) => {
+router.get('/invitations', authenticationMiddleware(), async (req, res) => {
     if (!req.user.groupInvitations){
         return res.render('groupsinvitations', { page: 'groups', subpage: 'invitations' }); 
     }
@@ -79,13 +74,11 @@ router.get('/groups/invitations', authenticationMiddleware(), async (req, res) =
     );
 });
 
-//
-router.get('/groups/create', authenticationMiddleware(), (req, res) => {
+router.get('/create', authenticationMiddleware(), (req, res) => {
     return res.render('groupscreate', { page: 'groups', subpage: 'create' });
 });
 
-//
-router.post('/groups/create', authenticationMiddleware(), async (req, res) => {
+router.post('/create', authenticationMiddleware(), async (req, res) => {
     const groupName = req.body.groupName;
     const creatingChannelData = { name: groupName, channelType: 'Group' };
     const createGroup = await createNewChannel(creatingChannelData);
@@ -93,8 +86,7 @@ router.post('/groups/create', authenticationMiddleware(), async (req, res) => {
     return res.render('groupscreate', { page: 'groups', subpage: 'create', successMessage: `${groupName} has been created!`});
 });
 
-//
-router.post('/groups/all/:groupId/invite', 
+router.post('/all/:groupId/invite', 
 
     authenticationMiddleware(), 
     noGroups(), 
@@ -108,7 +100,7 @@ router.post('/groups/all/:groupId/invite',
                 { 
                     page: 'groups', 
                     subpage: 'all', 
-                    searchError: 'You have no friends to invite!', 
+                    errorMessage: 'You do not have any friends to invite!', 
                     selectedChannelId: selectedGroupId
                 }
             );
@@ -121,11 +113,12 @@ router.post('/groups/all/:groupId/invite',
                 { 
                     page: 'groups', 
                     subpage: 'all', 
-                    searchError: `${friendUsername} is not in your friends list!`, 
+                    errorMessage: `${friendUsername} is not in your friends list!`, 
                     selectedChannelId: selectedGroupId
                 }
             );
         }
+        const selectedGroup = await getGroupInfo(selectedGroupId);
         if (friendFoundByUsername.groupInvitations){
             const friendGroupIds = Object.values(friendFoundByUsername.groupInvitations);
             if (friendGroupIds.includes(selectedGroupId)){
@@ -134,20 +127,19 @@ router.post('/groups/all/:groupId/invite',
                     { 
                         page: 'groups', 
                         subpage: 'all', 
-                        searchError: `An invitation was already sent to ${friendUsername}!`,
+                        errorMessage: `An invitation for ${selectedGroup.name} was already sent to ${friendUsername}!`,
                         selectedChannelId: selectedGroupId
                     } 
                 );
             }
         }
-        const selectedGroupMembers = (await getGroupInfo(selectedGroupId)).members;
-        if (selectedGroupMembers[friendFoundByUsername.id]){
+        if (selectedGroup.members[friendFoundByUsername.id]){
             return res.render(
                 'groupsinvite', 
                 { 
                     page: 'groups', 
                     subpage: 'all', 
-                    searchError: `${friendUsername} is already in this group!`, 
+                    errorMessage: `${friendUsername} is already in group "${selectedGroup.name}"!`, 
                     selectedChannelId: selectedGroupId
                 } 
             );
@@ -158,15 +150,14 @@ router.post('/groups/all/:groupId/invite',
             { 
                 page: 'groups', 
                 subpage: 'all', 
-                searchError: `${friendUsername} was invited to the group!`, 
+                successMessage: `${friendUsername} was invited to group ${selectedGroup.name}!`, 
                 selectedChannelId: selectedGroupId 
             }
         );
     }
 );
 
-//mid
-router.post('/groups/invitations/accept/:groupId', 
+router.post('/invitations/accept/:groupId', 
 
     authenticationMiddleware(), 
     noGroupInvitations(),
@@ -180,8 +171,7 @@ router.post('/groups/invitations/accept/:groupId',
     }
 );
 
-//mid
-router.post('/groups/invitations/reject/:groupId', 
+router.post('/invitations/reject/:groupId', 
 
     authenticationMiddleware(),
     noGroupInvitations(),
@@ -193,8 +183,7 @@ router.post('/groups/invitations/reject/:groupId',
     }
 );
 
-//mid
-router.get('/groups/all/:groupId/leave', 
+router.get('/all/:groupId/leave', 
 
     authenticationMiddleware(), 
     noGroups(),
@@ -216,7 +205,7 @@ router.get('/groups/all/:groupId/leave',
     }
 );
 
-router.get('/groups/all/:groupId/leave/leaderselect', 
+router.get('/all/:groupId/leave/leaderselect', 
 
     authenticationMiddleware(), 
     noGroups(),
@@ -225,11 +214,18 @@ router.get('/groups/all/:groupId/leave/leaderselect',
     
     (req, res) => {
         const selectedGroupId = req.params.groupId;
-        return res.render('groupsleaveleaderselect', { page: 'groups', subpage: 'all', selectedChannelId: selectedGroupId });
+        return res.render(
+            'groupsleaveleaderselect', 
+            { 
+                page: 'groups', 
+                subpage: 'all', 
+                selectedChannelId: selectedGroupId 
+            }
+        );
     }
 );
 
-router.post('/groups/all/:groupId/leave/leaderselect',
+router.post('/all/:groupId/leave/leaderselect',
 
     authenticationMiddleware(), 
     noGroups(),
@@ -247,7 +243,7 @@ router.post('/groups/all/:groupId/leave/leaderselect',
                     page: 'groups', 
                     subpage: 'all', 
                     selectedChannelId: selectedGroupId,  
-                    searchError: `There is no group member with a username of ${groupMemberUserame}!`
+                    errorMessage: `There is no group member with a username of ${groupMemberUserame} in group!`
                 }
             );
         }
@@ -258,7 +254,7 @@ router.post('/groups/all/:groupId/leave/leaderselect',
                     page: 'groups', 
                     subpage: 'all', 
                     selectedChannelId: selectedGroupId,  
-                    searchError: 'You cannot promote yourself leader when leaving!'
+                    errorMessage: 'You cannot promote yourself leader when leaving!'
                 }
             );
         }
@@ -268,7 +264,7 @@ router.post('/groups/all/:groupId/leave/leaderselect',
     }
 );
 
-router.get('/groups/all/:groupId/kick', 
+router.get('/all/:groupId/kick', 
 
     authenticationMiddleware(), 
     noGroups(),
@@ -277,11 +273,18 @@ router.get('/groups/all/:groupId/kick',
 
     async (req, res) => {
         const selectedGroupId = req.params.groupId;
-        return res.render('groupskick', { page: 'groups', subpage: 'all', selectedChannelId: selectedGroupId });
+        return res.render(
+            'groupskick', 
+            { 
+                page: 'groups', 
+                subpage: 'all', 
+                selectedChannelId: selectedGroupId 
+            }
+        );
     }
 );
 
-router.post('/groups/all/:groupId/kick', 
+router.post('/all/:groupId/kick', 
 
     authenticationMiddleware(), 
     noGroups(),
@@ -299,7 +302,7 @@ router.post('/groups/all/:groupId/kick',
                     page: 'groups', 
                     subpage: 'all', 
                     selectedChannelId: selectedGroupId, 
-                    searchError: `${groupMemberUsername} is not in this group!`
+                    errorMessage: `${groupMemberUsername} is not in this group!`
                 }
             );
         }
@@ -310,7 +313,7 @@ router.post('/groups/all/:groupId/kick',
                     page: 'groups', 
                     subpage: 'all', 
                     selectedChannelId: selectedGroupId, 
-                    searchError: `You cannot kick yourself!`
+                    errorMessage: `You cannot kick yourself!`
                 }
             );
         }
@@ -321,7 +324,7 @@ router.post('/groups/all/:groupId/kick',
                 page: 'groups', 
                 subpage: 'all', 
                 selectedChannelId: selectedGroupId, 
-                searchError: `${groupMemberUsername} was kicked!`
+                successMessage: `${groupMemberUsername} was kicked!`
             }
         );
     }

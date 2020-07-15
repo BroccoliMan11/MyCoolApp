@@ -43,17 +43,27 @@ app.use((req, res, next) => {
     next();
 });
 
+// //use routes
+// app.use(
+//     require('./routes/home'),
+//     //require('./routes/register'),
+//     require('./routes/login'),
+//     require('./routes/profile'),
+//     require('./routes/friends'),
+//     require('./routes/groups'),
+//     require('./routes/logout'),
+//     require('./routes/getuserinfo')
+// );
+
 //use routes
-app.use(
-    require('./routes/home'),
-    require('./routes/register'),
-    require('./routes/login'),
-    require('./routes/profile'),
-    require('./routes/friends'),
-    require('./routes/groups'),
-    require('./routes/logout'),
-    require('./routes/getuserinfo')
-);
+app.use('/', require('./routes/home'));
+app.use('/register', require('./routes/register'));
+app.use('/login', require('./routes/login'));
+app.use('/profile', require('./routes/profile'));
+app.use('/friends', require('./routes/friends'));
+app.use('/groups', require('./routes/groups'));
+app.use('/logout', require('./routes/logout'));
+app.use('/getuserinfo', require('./routes/getuserinfo'));
 
 //view engine setup
 const hbs = require('./handlebars');

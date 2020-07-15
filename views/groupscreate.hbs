@@ -1,10 +1,8 @@
-<div>
-    {{#if successMessage}}
-        <div class="alert alert-danger">
-            {{successMessage}}
-        </div>
-    {{/if}}
-</div>
+{{#if successMessage}}
+    <div class="alert alert-danger">
+        {{successMessage}}
+    </div>
+{{/if}}
 
 <form method="POST" action="/groups/create">
     <div class="form-group">

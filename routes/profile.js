@@ -3,7 +3,7 @@ const router = express.Router();
 
 const { authenticationMiddleware } = require('../utils/middlewares');
 
-router.get('/profile', authenticationMiddleware(), (req, res) => {
+router.get('/', authenticationMiddleware(), (req, res) => {
     return res.render(
         'profile',
         {

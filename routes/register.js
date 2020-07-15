@@ -10,7 +10,7 @@ const { createNewUser } = require('../utils/dbmanipulate');
 const { findUserByUsername } = require('../utils/dbretrieve');
 
 //GET "register" page
-router.get('/register', (req, res) => {
+router.get('/', (req, res) => {
     return res.render('register', {page: 'register'});
 });
 
@@ -20,7 +20,7 @@ router.get('/register', (req, res) => {
 - if successful => login
 - else => display error messages
 */
-router.post('/register', async (req, res) => {
+router.post('/', async (req, res) => {
     const username = req.body.username;
     const password = req.body.password;
 

@@ -1,8 +1,14 @@
-{{#if searchError}}
+{{#if errorMessage}}
     <div class="alert alert-danger">
-        {{searchError}}
+        {{errorMessage}}
     </div>
 {{/if}}
+
+{{#if successMessage}}
+    <div class="alert alert-success">
+        {{successMessage}}
+    </div>
+{{/iff}}
 
 <form method="POST", action="/friends/add">
     <div class="form-group">

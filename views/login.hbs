@@ -1,10 +1,8 @@
-<div>
-    {{#if error}}
-        <div class="alert alert-danger">
-            {{error}}
-        </div>
-    {{/if}}
-</div>
+{{#if error}}
+    <div class="alert alert-danger">
+        {{error}}
+    </div>
+{{/if}}
 
 <form method="POST" action="/login">
     <div class="form-group">

@@ -4,6 +4,8 @@ const messageContainer = document.querySelector('#message-container');
 const messageForm = document.querySelector("#send-container");
 const messageInput = document.querySelector("#message-input");
 
+let selectedMessageIndex = 0;
+
 (async function joinChannel() {
     const selectedChannelId = window.location.pathname.split('/').pop();
     const response = await fetch('/getuserinfo');
@@ -20,10 +22,16 @@ socket.on('message', async message => {
     }
 });
 
-socket.on('loadMessages', allMessages => {
-    allMessages.forEach(message => outputMessage(message));
+socket.on('loadMessages', (messages) => {
+    selectedMessageIndex = messages.newMessageIndex;
+    messages.nextGroupMessages.forEach(message => outputMessage(message));
     messageContainer.scrollTop = messageContainer.scrollHeight;
 });
+
+socket.on('loadMessagesFromTop', (messages) => {
+    selectedMessageIndex = messages.newMessageIndex;
+    messages.nextGroupMessages.forEach(message => outputMessage(message, true));
+})
 
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
@@ -33,10 +41,22 @@ messageForm.addEventListener('submit', (e) => {
     messageContainer.scrollTop = messageContainer.scrollHeight;
 });
 
-function outputMessage(message) {
+messageContainer.addEventListener('scroll', () => {
+    if (messageContainer.scrollTop === 0){
+        socket.emit('scrolledTop', selectedMessageIndex);
+    }
+})
+
+function outputMessage(message, insertToTop = false) {
     const messageElement = document.createElement('div');
-    messageElement.innerText = `${message.username} (${message.time.toString()}): ${message.text}`;
-    messageContainer.append(messageElement);
+    const timeOptions = { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit"}
+    const timeString = new Date(message.time).toLocaleTimeString([], timeOptions);
+    messageElement.innerText = `${message.username} (${timeString}): ${message.text}`;
+    if (!insertToTop){
+        messageContainer.appendChild(messageElement);
+    } else {
+        messageContainer.insertBefore(messageElement, messageContainer.firstElementChild);
+    }
 }
 
 function switchChannel(channelGroup, channelId){

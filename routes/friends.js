@@ -8,11 +8,11 @@ const { acceptFriendRequest, sendFriendReuest, removeFriends, removeFriendReques
 const { getFriendsInfoFormatted, getFriendRequestsInfoFormatted, 
     findUserByUsername, findFriendByUsername } = require('../utils/dbretrieve');
 
-router.get('/friends', authenticationMiddleware(), (req, res) => {
+router.get('/', authenticationMiddleware(), (req, res) => {
     return res.redirect('/friends/all');
 });
 
-router.get('/friends/all', authenticationMiddleware(), (req, res) => {
+router.get('/all', authenticationMiddleware(), (req, res) => {
     if (!req.user.friends) {
         return res.render('friendsall', { page: 'friends', subpage: 'all' });
     }
@@ -20,7 +20,7 @@ router.get('/friends/all', authenticationMiddleware(), (req, res) => {
     return res.redirect(`/friends/all/${firstChannelId}`);
 });
 
-router.get('/friends/all/:channelId', 
+router.get('/all/:channelId', 
 
     authenticationMiddleware(), 
     noFriends(),
@@ -32,7 +32,7 @@ router.get('/friends/all/:channelId',
     }
 );
 
-router.get('/friends/requests', authenticationMiddleware(), async (req, res) => {
+router.get('/requests', authenticationMiddleware(), async (req, res) => {
     if (!req.user.friendRequests){
         return res.render( 'friendsrequests', { page: 'friends', subpage: 'requests' });
     } 
@@ -40,15 +40,15 @@ router.get('/friends/requests', authenticationMiddleware(), async (req, res) => 
     return res.render( 'friendsrequests', { page: 'friends', subpage: 'requests', requestFriendsInfo: friendRequestInfo });
 })
 
-router.get('/friends/add', authenticationMiddleware(), (req, res) => {
+router.get('/add', authenticationMiddleware(), (req, res) => {
     return res.render('friendsadd', { page: 'friends', subpage: 'add' });
 })
 
-router.get('/friends/remove', authenticationMiddleware(), (req, res) => {
+router.get('/remove', authenticationMiddleware(), (req, res) => {
     return res.render('friendsremove', { page: 'friends', subpage: 'remove' });
 });
 
-router.post('/friends/requests/accept/:friendId', 
+router.post('/requests/accept/:friendId', 
 
     authenticationMiddleware(), 
     noFriendRequests(),
@@ -61,7 +61,7 @@ router.post('/friends/requests/accept/:friendId',
     }
 );
 
-router.post('/friends/requests/reject/:friendId', 
+router.post('/requests/reject/:friendId', 
 
     authenticationMiddleware(), 
     noFriendRequests(),
@@ -74,57 +74,80 @@ router.post('/friends/requests/reject/:friendId',
     }
 );
 
-router.post('/friends/add', authenticationMiddleware(), async (req, res) => {
+router.post('/add', authenticationMiddleware(), async (req, res) => {
     const friendUsername = req.body.friendName;
     if (friendUsername === req.user.username){
-        return res.render('friendsadd', { page: 'friends', subpage: 'add', searchError: 'You cannot add yourself!' });
+        return res.render(
+            'friendsadd', 
+            { 
+                page: 'friends', 
+                subpage: 'add', 
+                errorMessage: 'You cannot add yourself!' 
+            }
+        );
     }
     const userFoundByUsername = await findUserByUsername(friendUsername);
     if (!userFoundByUsername){
-        return res.render('friendsadd', { page: 'friends', subpage: 'add', searchError: 'Could not find user!' });
+        return res.render(
+            'friendsadd', 
+            { 
+                page: 'friends', 
+                subpage: 'add', 
+                errorMessage: `Could not find user "${friendUsername}"!`
+            }
+        );
     }
-    if (req.user.friendRequests && 
-        req.user.friendRequests.includes(userFoundByUsername.id)) {
+    if (req.user.friendRequests && req.user.friendRequests.includes(userFoundByUsername.id)) {
         return res.render(
             'friendsadd',
             {
                 page: 'friends',
                 subpage: 'add',
-                searchError: 'The user already sent you a request!'
+                errorMessage: `User "${friendUsername}" already sent you a friend request!`
             }
         )
     }
     if (req.user.friends){
         const friendIds = Object.keys(req.user.friends);
         if (friendIds.includes(userFoundByUsername.id)){
-            return res.render('friendsadd', { page: 'friends', subpage: 'add', searchError: 'You are already friends!' });
+            return res.render(
+                'friendsadd', 
+                { 
+                    page: 'friends', 
+                    subpage: 'add', 
+                    errorMessage: `You and user "${friendUsername}" are already friends!` 
+                }
+            );
         }
     }
-    if (userFoundByUsername.friendRequests &&
-        userFoundByUsername.friendRequests.includes(req.user.id)){
+    if (userFoundByUsername.friendRequests && userFoundByUsername.friendRequests.includes(req.user.id)){
         return res.render(
             'friendsadd', 
             { 
                 page: 'friends', 
                 subpage: 'all', 
-                searchError: 'You already sent a request to that user!' 
+                errorMessage: `You already sent a friend request to user "${friendUsername}"!` 
             }
         );
     }
-    /*await*/ sendFriendReuest(userFoundByUsername.id, req.user.id);
-    return res.render('friendsadd', { page: 'friends', subpage: 'add', searchError: 'Your request was sent!' });
+    sendFriendReuest(userFoundByUsername.id, req.user.id);
+    return res.render(
+        'friendsadd', 
+        { 
+            page: 'friends', 
+            subpage: 'add', 
+            successMessage: `Your friend request was sent to "${friendUsername}"!` });
 });
 
-router.post('/friends/remove', authenticationMiddleware(), async(req, res) => {
+router.post('/remove', authenticationMiddleware(), async(req, res) => {
     const friendUsername = req.body.friendName;
-
     if (!req.user.friends){
         return res.render(
             'friendsremove',
             {
                 page: 'friends',
                 subpage: 'remove',
-                searchError: 'You have no friends!'
+                errorMessage: 'You do not have any friends to remove!'
             }
         )
     }
@@ -135,7 +158,7 @@ router.post('/friends/remove', authenticationMiddleware(), async(req, res) => {
             { 
                 page: 'friends', 
                 subpage: 'remove',
-                searchError: 'The user is not in your friends list!' 
+                errorMessage: `User ${friendUsername} is not in your friends list!`
             }
         );
     }
@@ -145,7 +168,7 @@ router.post('/friends/remove', authenticationMiddleware(), async(req, res) => {
         {
             page: 'friends',
             subpage: 'remove',
-            searchError: 'User was removed from your friends list!'
+            successMessage: `User ${friendUsername} was removed from your friends list!`
         }
     )
 });

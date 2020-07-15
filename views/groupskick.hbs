@@ -1,8 +1,14 @@
 <a href="/groups/all/{{selectedChannelId}}">Go Back</a>
 
-{{#if searchError}}
+{{#if errorMessage}}
     <div class="alert alert-danger">
-        {{searchError}}
+        {{errorMessage}}
+    </div>
+{{/if}}
+
+{{#if successMessage}}
+    <div class="alert alert-danger">
+        {{successMessage}}
     </div>
 {{/if}}
 

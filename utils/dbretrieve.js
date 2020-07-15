@@ -1,4 +1,6 @@
 const db = require('../database');
+const { groupIdNotInInvitations } = require('./middlewares');
+const { addNewGroupMessage } = require('./dbmanipulate');
 
 async function getUserInfo (userId) {
     let userInfo = (await db.ref(`users/${userId}`).once('value')).val();
@@ -71,13 +73,32 @@ async function findGroupMemberByUsername (groupId, username) {
     return allGroupMembers.find((user) => { return user.username === username });
 }
 
-async function getGroupMessagesFormatted (groupId) {
-    const allGroupMessages = (await getGroupInfo(groupId)).messageLog
-    if (!allGroupMessages) return undefined;
-    return Promise.all(Object.values(allGroupMessages).map(async (message) => {
-        const groupMember = await getUserInfo(message.userId);
-        return { username: groupMember.username, text: message.text, time: message.time }
-    }));
+async function getGroupMessagesFormatted (groupId, currentIndex, amountLoading) {
+    const messageLog = (await getGroupInfo(groupId)).messageLog;
+    if (!messageLog) return undefined;
+    const savedMemberData = {};
+    const nextGroupMessages = [];
+    const allGroupMessages = Object.values(messageLog);
+
+    let selectedIndex;
+    for (selectedIndex = currentIndex; selectedIndex < (currentIndex + amountLoading); selectedIndex++){
+        const selecteGroupMessageIndex = allGroupMessages.length - 1 - selectedIndex;
+        if (selecteGroupMessageIndex < 0) break;
+        const message = allGroupMessages[selecteGroupMessageIndex];
+        if (!savedMemberData[message.userId]){
+            savedMemberData[message.userId] = await getUserInfo(message.userId);
+        }
+        const formattedMessage = { username: savedMemberData[message.userId].username, text: message.text, time: message.time, index: selectedIndex }
+        nextGroupMessages.push(formattedMessage);
+    }
+
+    return { newMessageIndex: selectedIndex, nextGroupMessages: nextGroupMessages };
+
+
+    // return Promise.all(Object.values(allGroupMessages).map(async (message) => {
+    //     const groupMember = await getUserInfo(message.userId);
+    //     return { username: groupMember.username, text: message.text, time: message.time }
+    // }));
 }
 
 module.exports = {
