@@ -1,17 +1,22 @@
+//link these routes
 const express = require('express');
 const router = express.Router();
 
+//middlware functions
 const { authenticationMiddleware, noFriends, notInDMChannel, idNotInFriendRequests, noFriendRequests } = require('../utils/middlewares');
 
+//database functions
 const { acceptFriendRequest, sendFriendReuest, removeFriends, removeFriendRequest } = require('../utils/dbmanipulate');
 
-const { getFriendsInfoFormatted, getFriendRequestsInfoFormatted, 
-    findUserByUsername, findFriendByUsername } = require('../utils/dbretrieve');
+const { getFriendsInfoFormatted, getFriendRequestsInfoFormatted, findUserByUsername, findFriendByUsername } = require('../utils/dbretrieve');
 
+
+/*Summary: redirect to "/friends/all" page*/
 router.get('/', authenticationMiddleware(), (req, res) => {
     return res.redirect('/friends/all');
 });
 
+/*Summary: redirect to first DM channel*/
 router.get('/all', authenticationMiddleware(), (req, res) => {
     if (!req.user.friends) {
         return res.render('friendsall', { page: 'friends', subpage: 'all' });
@@ -20,6 +25,7 @@ router.get('/all', authenticationMiddleware(), (req, res) => {
     return res.redirect(`/friends/all/${firstChannelId}`);
 });
 
+/*Summary: render selected channel's page*/
 router.get('/all/:channelId', 
 
     authenticationMiddleware(), 
@@ -32,6 +38,7 @@ router.get('/all/:channelId',
     }
 );
 
+/*Summary: render "requests" page*/
 router.get('/requests', authenticationMiddleware(), async (req, res) => {
     if (!req.user.friendRequests){
         return res.render( 'friendsrequests', { page: 'friends', subpage: 'requests' });
@@ -40,14 +47,17 @@ router.get('/requests', authenticationMiddleware(), async (req, res) => {
     return res.render( 'friendsrequests', { page: 'friends', subpage: 'requests', requestFriendsInfo: friendRequestInfo });
 })
 
+/*Summary render "add" page*/
 router.get('/add', authenticationMiddleware(), (req, res) => {
     return res.render('friendsadd', { page: 'friends', subpage: 'add' });
 })
 
+/*Summary: render "remove" page*/
 router.get('/remove', authenticationMiddleware(), (req, res) => {
     return res.render('friendsremove', { page: 'friends', subpage: 'remove' });
 });
 
+/*Summary: accept friend request*/
 router.post('/requests/accept/:friendId', 
 
     authenticationMiddleware(), 
@@ -61,8 +71,8 @@ router.post('/requests/accept/:friendId',
     }
 );
 
+/*Summary: reject friend request*/
 router.post('/requests/reject/:friendId', 
-
     authenticationMiddleware(), 
     noFriendRequests(),
     idNotInFriendRequests(),
@@ -74,6 +84,8 @@ router.post('/requests/reject/:friendId',
     }
 );
 
+
+/*Summary: send friend request*/
 router.post('/add', authenticationMiddleware(), async (req, res) => {
     const friendUsername = req.body.friendName;
     if (friendUsername === req.user.username){
@@ -139,6 +151,7 @@ router.post('/add', authenticationMiddleware(), async (req, res) => {
             successMessage: `Your friend request was sent to "${friendUsername}"!` });
 });
 
+/*Summary: remove friend*/
 router.post('/remove', authenticationMiddleware(), async(req, res) => {
     const friendUsername = req.body.friendName;
     if (!req.user.friends){
@@ -162,7 +175,7 @@ router.post('/remove', authenticationMiddleware(), async(req, res) => {
             }
         );
     }
-    /*await*/ removeFriends(req.user.id, friendFoundByUsername.id, friendFoundByUsername.channelId);
+    removeFriends(req.user.id, friendFoundByUsername.id, friendFoundByUsername.channelId);
     return res.render(
         'friendsremove',
         {

@@ -1,3 +1,5 @@
+/* set up handlebars (view engine to render pages) */
+
 const exphbs = require('express-handlebars');
 
 const hbs = exphbs.create({

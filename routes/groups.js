@@ -1,19 +1,25 @@
+//link these routes
 const express = require('express');
 const router = express.Router();
 
+//middleware functions
 const { authenticationMiddleware, noGroupInvitations, noGroups, 
     notInGroup, notGroupLeader, groupIdNotInInvitations } = require('../utils/middlewares');
 
+//database functions
 const { createNewChannel, joinGroup, sendGroupInvitation, 
     removeGroupInvitation, leaveGroup, deleteGroup, promoteGroupMember } = require('../utils/dbmanipulate');
 
 const { getGroupsInfoFormatted, getGroupInfo, getGroupInvitationsInfoFormatted, 
     findFriendByUsername, findGroupMemberByUsername} = require('../utils/dbretrieve');
 
+
+/*Summary: redirect to "/groups/all" page */
 router.get('/', authenticationMiddleware(), (req, res) => {
     return res.redirect('/groups/all')
 });
 
+/*Summary: redirect to the first channel in user's group list*/
 router.get('/all', authenticationMiddleware(), async (req, res) => {
     if (!req.user.groups) {
         return res.render('groupsall', { page: 'groups', subpage: 'all' });
@@ -22,6 +28,7 @@ router.get('/all', authenticationMiddleware(), async (req, res) => {
     return res.redirect(`/groups/all/${firstChannelId}`);
 });
 
+/*Summary: render selected group's page */
 router.get('/all/:groupId', 
 
     authenticationMiddleware(), 
@@ -47,6 +54,7 @@ router.get('/all/:groupId',
     }
 );
 
+/*Summary: render selected group's "invite" page*/
 router.get('/all/:groupId/invite', 
 
     authenticationMiddleware(), 
@@ -59,6 +67,7 @@ router.get('/all/:groupId/invite',
     }
 );
 
+/*Summary: render "/groups/invitations" page*/
 router.get('/invitations', authenticationMiddleware(), async (req, res) => {
     if (!req.user.groupInvitations){
         return res.render('groupsinvitations', { page: 'groups', subpage: 'invitations' }); 
@@ -74,10 +83,12 @@ router.get('/invitations', authenticationMiddleware(), async (req, res) => {
     );
 });
 
+/*Summary: render "/groups/create" page*/
 router.get('/create', authenticationMiddleware(), (req, res) => {
     return res.render('groupscreate', { page: 'groups', subpage: 'create' });
 });
 
+/*Summary: create a new group*/
 router.post('/create', authenticationMiddleware(), async (req, res) => {
     const groupName = req.body.groupName;
     const creatingChannelData = { name: groupName, channelType: 'Group' };
@@ -86,6 +97,7 @@ router.post('/create', authenticationMiddleware(), async (req, res) => {
     return res.render('groupscreate', { page: 'groups', subpage: 'create', successMessage: `${groupName} has been created!`});
 });
 
+/*Summary: invite friend to group*/
 router.post('/all/:groupId/invite', 
 
     authenticationMiddleware(), 
@@ -157,6 +169,7 @@ router.post('/all/:groupId/invite',
     }
 );
 
+/*Summary: accept group invitation*/
 router.post('/invitations/accept/:groupId', 
 
     authenticationMiddleware(), 
@@ -166,11 +179,11 @@ router.post('/invitations/accept/:groupId',
     async (req, res) => {
         const selectedGroupId = req.params.groupId;
         await joinGroup(req.user.id, selectedGroupId, 'member');
-        await removeGroupInvitation(req.user.id, selectedGroupId);
         return res.status(200).send('Group was added to group list!');
     }
 );
 
+/*Summary: remove user's invitation to selected group */
 router.post('/invitations/reject/:groupId', 
 
     authenticationMiddleware(),
@@ -183,6 +196,8 @@ router.post('/invitations/reject/:groupId',
     }
 );
 
+/*Summary: leave group*/
+/*THIS IS WRONG! THIS SHOULD BE A POST REQUEST!*/
 router.get('/all/:groupId/leave', 
 
     authenticationMiddleware(), 
@@ -205,6 +220,7 @@ router.get('/all/:groupId/leave',
     }
 );
 
+/*Summary: render selected group's "/leave/leaderselect" page*/
 router.get('/all/:groupId/leave/leaderselect', 
 
     authenticationMiddleware(), 
@@ -225,6 +241,7 @@ router.get('/all/:groupId/leave/leaderselect',
     }
 );
 
+/*Summary: select new group leader before leader leaves group*/
 router.post('/all/:groupId/leave/leaderselect',
 
     authenticationMiddleware(), 
@@ -264,6 +281,7 @@ router.post('/all/:groupId/leave/leaderselect',
     }
 );
 
+/*Summary: render selected group's "kick" page*/
 router.get('/all/:groupId/kick', 
 
     authenticationMiddleware(), 
@@ -284,6 +302,7 @@ router.get('/all/:groupId/kick',
     }
 );
 
+/* Summary: kick member from selected group */
 router.post('/all/:groupId/kick', 
 
     authenticationMiddleware(), 

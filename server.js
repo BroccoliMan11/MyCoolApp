@@ -1,11 +1,8 @@
-//parse environment variables
-require('dotenv').config();
+require('dotenv').config(); //parses environment variables
 
-//for combinding path strings
-const path = require('path');
-//create a server
+const path = require('path'); //for combining path strings
 const express = require('express');
-const app = express();
+const app = express(); //create a server
 
 //create websocket and link to server
 const http = require('http');
@@ -14,22 +11,23 @@ const socketio = require('socket.io');
 const io = socketio(server);
 require('./socketevents')(io);
 
-//static folder
+//static folder (client files)
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
+//listen to PORT
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, console.log(`Server is running on port ${PORT}`));
 
-//get express-validator
+//use express-validator (for validation)
 const expressValidator = require('express-validator');
 app.use(expressValidator());
 
-// //get body parser
+//use body parser (get values sent by forms)
 const bodyParser = require('body-parser');
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false}));
 
-// //get passport
+//get passport (for validation)
 const passport = require('./utils/passport');
 
 app.use(require('./utils/session'));
@@ -37,23 +35,11 @@ app.use(require('./utils/session'));
 app.use(passport.initialize());
 app.use(passport.session());
 
-//set "isAuthenticated" in handlebars files
+//set "isAuthenticated" for the handlebars file
 app.use((req, res, next) => {
     res.locals.isAuthenticated = req.isAuthenticated();
     next();
 });
-
-// //use routes
-// app.use(
-//     require('./routes/home'),
-//     //require('./routes/register'),
-//     require('./routes/login'),
-//     require('./routes/profile'),
-//     require('./routes/friends'),
-//     require('./routes/groups'),
-//     require('./routes/logout'),
-//     require('./routes/getuserinfo')
-// );
 
 //use routes
 app.use('/', require('./routes/home'));

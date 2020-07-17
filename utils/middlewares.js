@@ -1,6 +1,7 @@
 const db = require('../database');
 const { getGroupInfo } = require('./dbretrieve');
 
+/*Sumary: check if user is authenticated*/
 function authenticationMiddleware() {
     return (req, res, next) => {
         if (req.isAuthenticated()) return next();
@@ -8,6 +9,7 @@ function authenticationMiddleware() {
     };
 }
 
+/*Summary: check if user is not in a group*/
 function noGroups(){
     return (req, res, next) => {
         if (!req.user.groups){
@@ -17,6 +19,7 @@ function noGroups(){
     }
 }
 
+/*Summary: check if user is not in target group */
 function notInGroup(){
     return (req, res, next) => {
         const selectedGroupId = req.params.groupId;
@@ -30,6 +33,7 @@ function notInGroup(){
     }
 }
 
+/*Summary: check if user is not the leader of target group*/
 function notGroupLeader(){
     return async (req, res, next) => {
         const selectedGroupId = req.params.groupId;
@@ -43,6 +47,7 @@ function notGroupLeader(){
     }
 }
 
+/*Summary: check if user has no group invitations*/
 function noGroupInvitations(){
     return (req, res, next) => {
         if (!req.user.groupInvitations){
@@ -52,6 +57,7 @@ function noGroupInvitations(){
     }
 }
 
+/*Summary: check if target group invited user*/
 function groupIdNotInInvitations() {
     return (req, res, next) => {
         const selectedGroupId = req.params.groupId;
@@ -64,6 +70,7 @@ function groupIdNotInInvitations() {
     };
 }
 
+/*Summary: check if user has no friends*/
 function noFriends() {
     return (req, res, next) => {
         if (!req.user.friends){
@@ -75,6 +82,7 @@ function noFriends() {
     }
 }
 
+/*Summary: check if user is not associated with DM channel*/
 function notInDMChannel() {
     return (req, res, next) => {
         const selectedChannelId = req.params.channelId;
@@ -88,6 +96,7 @@ function notInDMChannel() {
     }
 }
 
+/*Summary: check if user has no friend requests*/
 function noFriendRequests() {
     return (req, res, next) => {
         if (!req.user.friendRequests) {
@@ -99,6 +108,7 @@ function noFriendRequests() {
     }
 }
 
+/*Summary check if user ID is not in user's friend request list*/
 function idNotInFriendRequests(){
     return (req, res, next) => {
         const friendId = req.params.friendId;

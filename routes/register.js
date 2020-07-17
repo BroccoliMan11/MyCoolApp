@@ -1,4 +1,4 @@
-//link routes
+//link these routes
 const express = require('express');
 const router = express.Router();
 
@@ -6,19 +6,19 @@ const router = express.Router();
 const bcrypt = require('bcrypt');
 const saltRounds = 10;
 
+//database functions
 const { createNewUser } = require('../utils/dbmanipulate');
 const { findUserByUsername } = require('../utils/dbretrieve');
 
-//GET "register" page
+/*Summary: render "register" page*/
 router.get('/', (req, res) => {
     return res.render('register', {page: 'register'});
 });
 
-/*POST "regist" page
-- get username/password from form
-- validate usernames and passwords
-- if successful => login
-- else => display error messages
+/*Summary: register for new account
+1. validate usernames and passwords from form
+2. if validation successful => login (passport) AND redirect to "home" page
+3. else => display error messages
 */
 router.post('/', async (req, res) => {
     const username = req.body.username;

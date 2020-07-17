@@ -1,3 +1,7 @@
+/*set up database
+*THIS IS WRONG! I will need to import "firebase-admin" and do the proper configurations*
+*/
+
 const firebase = require('firebase');
 
 const firebaseConfig = {

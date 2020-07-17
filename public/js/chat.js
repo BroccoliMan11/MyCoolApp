@@ -1,11 +1,13 @@
-const socket = io();
+const socket = io(); //socket emit and listen
 
-const messageContainer = document.querySelector('#message-container');
-const messageForm = document.querySelector("#send-container");
-const messageInput = document.querySelector("#message-input");
+const messageContainer = document.querySelector('#message-container'); //container to display messages in
+const messageForm = document.querySelector("#send-container"); //the whole form to submit messages 
+const messageInput = document.querySelector("#message-input"); //the actual messgae input textbox (inside "messageForm")
 
-let selectedMessageIndex = 0;
+//message index selected (used to see up to what index messgaes are loaded, this is for loading batches of messages)
+let currentMessageId;
 
+/*Summary: join the channel (In front end for now)*/
 (async function joinChannel() {
     const selectedChannelId = window.location.pathname.split('/').pop();
     const response = await fetch('/getuserinfo');
@@ -13,52 +15,60 @@ let selectedMessageIndex = 0;
     socket.emit('joinChannel', {userId: user.id, channelId: selectedChannelId});
 })();
 
-socket.on('message', async message => {
+/*Summary: append messages to message container*/
+socket.on('message', message => {
     console.log(message);
     const isAtBottom = (messageContainer.scrollHeight - messageContainer.scrollTop === messageContainer.clientHeight);
-    outputMessage(message);
+    outputMessage(message, true);
     if (isAtBottom){
         messageContainer.scrollTop = messageContainer.scrollHeight;
     }
 });
 
+/*Summary: load messages into message container (appending to bottom)*/
 socket.on('loadMessages', (messages) => {
-    selectedMessageIndex = messages.newMessageIndex;
-    messages.nextGroupMessages.forEach(message => outputMessage(message));
-    messageContainer.scrollTop = messageContainer.scrollHeight;
+    messages.nextGroupMessages.forEach(message => outputMessage(message, false));
+    if (!currentMessageId){
+        messageContainer.scrollTop = messageContainer.scrollHeight;
+    }
+    currentMessageId = messages.newMessageId;
 });
 
-socket.on('loadMessagesFromTop', (messages) => {
-    selectedMessageIndex = messages.newMessageIndex;
-    messages.nextGroupMessages.forEach(message => outputMessage(message, true));
-})
-
+/*Summary: message input send*/
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     const message = messageInput.value;
     socket.emit('chatMessage', message);
     messageInput.value = '';
+    console.log(messageContainer.scrollTop);
+    console.log(messageContainer.scrollHeight);
     messageContainer.scrollTop = messageContainer.scrollHeight;
+    console.log(messageContainer.scrollTop);
+    console.log(messageContainer.scrollHeight);
 });
 
+/*Summary: load extra messages*/
 messageContainer.addEventListener('scroll', () => {
     if (messageContainer.scrollTop === 0){
-        socket.emit('scrolledTop', selectedMessageIndex);
+        socket.emit('scrolledTop', currentMessageId);
     }
 })
 
-function outputMessage(message, insertToTop = false) {
+/*Summary: append message to message container*/
+function outputMessage(message, toBottom) {
     const messageElement = document.createElement('div');
     const timeOptions = { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit"}
     const timeString = new Date(message.time).toLocaleTimeString([], timeOptions);
     messageElement.innerText = `${message.username} (${timeString}): ${message.text}`;
-    if (!insertToTop){
-        messageContainer.appendChild(messageElement);
-    } else {
+    if (toBottom) {
+        console.log("appending to bottom");
+        messageContainer.append(messageElement);
+    }else{
         messageContainer.insertBefore(messageElement, messageContainer.firstElementChild);
     }
 }
 
+/*Summary: switches the selected group*/
 function switchChannel(channelGroup, channelId){
     window.location.replace(`/${channelGroup}/all/${channelId}`);
 }
