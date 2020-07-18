@@ -1,21 +1,23 @@
-<a href="/groups/all/{{selectedChannelId}}">Go Back</a>
+<div class="container">
+    <a href="/groups/all/{{selectedChannelId}}" class="btn btn-warning btn-sm">Go Back</a>
 
-{{#if errorMessage}}
-    <div class="alert alert-danger">
-        {{searchError}}
-    </div>
-{{/if}}
+    {{#if errorMessage}}
+        <div class="alert alert-danger">
+            {{errorMessage}}
+        </div>
+    {{/if}}
 
-{{#if successMessage}}
-    <div class="alert alert-success">
-        {{successMessage}}
-    </div>
-{{/if}}
+    {{#if successMessage}}
+        <div class="alert alert-success">
+            {{successMessage}}
+        </div>
+    {{/if}}
 
-<form method="POST", action="/groups/all/{{selectedChannelId}}/invite">
-    <div class="form-group">
-        <label for="friendName">Invite Friend:</label>
-        <input type="text" name="friendName" class="form-control" id="requestSender" placeholder="Username">       
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+    <form method="POST", action="/groups/all/{{selectedChannelId}}/invite">
+        <div class="form-group">
+            <label for="friendName">Invite Friend:</label>
+            <input type="text" name="friendName" class="form-control" id="requestSender" placeholder="Username">       
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+</div>

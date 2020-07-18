@@ -1,13 +1,15 @@
-{{#if successMessage}}
-    <div class="alert alert-danger">
-        {{successMessage}}
-    </div>
-{{/if}}
+<div class="container">
+    {{#if successMessage}}
+        <div class="alert alert-success">
+            {{successMessage}}
+        </div>
+    {{/if}}
 
-<form method="POST" action="/groups/create">
-    <div class="form-group">
-        <label for="groupName">Group Name</label>
-        <input type="text" name="groupName" class="form-control" placeholder="Group Name">
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+    <form method="POST" action="/groups/create">
+        <div class="form-group">
+            <label for="groupName">Group Name</label>
+            <input type="text" name="groupName" class="form-control" placeholder="Group Name">
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+</div>

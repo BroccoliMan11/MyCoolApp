@@ -33,7 +33,7 @@ Input: id = selected group id
 */
 function removeInvitationDiv(id){
     const div = document.querySelector(`[group_id="${id}"]`);
-    const requestContainer = document.querySelector("#request-container");
+    const requestContainer = document.querySelector("#invitations-container");
     requestContainer.removeChild(div);
     if (requestContainer.childElementCount === 0){
         requestContainer.textContent = "no group invitations"

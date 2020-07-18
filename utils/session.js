@@ -6,9 +6,9 @@ const FirebaseStore = require('connect-session-firebase')(session);
 
 module.exports = session({
     store: new FirebaseStore({
-        database: db
+        database: db,
     }),
     secret: 'hdakhdewkfsdnbhjsegyw',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
 });

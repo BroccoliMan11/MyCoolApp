@@ -2,6 +2,7 @@
 const db = require('../database');
 const { getGroupInfo } = require('./dbretrieve');
 
+
 /*Summary: creates a new user
 Input: addingUserData = new user's details (OBJECT)
 Output: new user's detail, including new ID (OBJECT)*/
@@ -117,7 +118,8 @@ Input: groupId = ID of group which is having the message appended to it's messag
        message = message data being appended (OBJECT) 
 */
 async function addNewGroupMessage(groupId, message){
-    db.ref(`channels/${groupId}/messageLog`).push(message);
+    const addedMessageId = await (db.ref(`channels/${groupId}/messageLog`).push(message)).key;
+    db.ref(`channels/${groupId}/messageLog/${addedMessageId}/id`).set(addedMessageId);
 }
 
 module.exports = {

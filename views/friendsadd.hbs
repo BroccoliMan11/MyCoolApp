@@ -1,19 +1,21 @@
-{{#if errorMessage}}
-    <div class="alert alert-danger">
-        {{errorMessage}}
-    </div>
-{{/if}}
+<div class="container">
+    {{#if errorMessage}}
+        <div class="alert alert-danger">
+            {{errorMessage}}
+        </div>
+    {{/if}}
 
-{{#if successMessage}}
-    <div class="alert alert-success">
-        {{successMessage}}
-    </div>
-{{/iff}}
+    {{#if successMessage}}
+        <div class="alert alert-success">
+            {{successMessage}}
+        </div>
+    {{/if}}
 
-<form method="POST", action="/friends/add">
-    <div class="form-group">
-        <label for="friendName">Add Friend:</label>
-        <input type="text" name="friendName" class="form-control" placeholder="Username">       
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+    <form method="POST", action="/friends/add">
+        <div class="form-group">
+            <label for="friendName">Add Friend:</label>
+            <input type="text" name="friendName" class="form-control" placeholder="Username">       
+        </div>
+        <button type="submit" class="btn btn-success">Submit</button>
+    </form>
+</div>

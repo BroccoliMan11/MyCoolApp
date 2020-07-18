@@ -1,15 +1,16 @@
-<div id="request-container">
+<div class="container">
     {{#if requestFriendsInfo}}
-        {{#each requestFriendsInfo}}
-            <div class="request" user_id="{{this.id}}">
-                <p>{{this.id}} {{this.username}}</p>
-                <button onclick='acceptFriendRequest("{{this.id}}")'>Accept</button>
-                <button onclick='rejectFriendRequest("{{this.id}}")'>Reject</button>
-            </div>
-        {{/each}}
+        <ul id="requests-container" class="list-group" style="height:460px;overflow:hidden auto">
+            {{#each requestFriendsInfo}}
+                <li class="list-group-item" user_id="{{this.id}}">
+                    <p style="color:inherit">{{this.id}} {{this.username}}</p>
+                    <button type="button" class="btn btn-success" onclick='acceptFriendRequest("{{this.id}}")'>Accept</button>
+                    <button type="button" class="btn btn-danger" onclick='rejectFriendRequest("{{this.id}}")'>Reject</button>
+                </li>
+            {{/each}}
+        </ul>
     {{else}}
         No friend requests
     {{/if}}
 </div>
-
 <script src="/public/js/friendsrequests.js"></script>

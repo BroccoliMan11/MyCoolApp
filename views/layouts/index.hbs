@@ -10,12 +10,12 @@
     <body>
         {{>navbar}}
         {{#if subpage}}
-            <div class="container" style="margin-top:136px;">
-                {{>subnavbar}}
+            {{>subnavbar}}
+            <div style="margin-top:130px;">
                 {{{body}}}
             </div>
         {{else}}
-            <div class="container" style="margin-top:80px;">
+            <div style="margin-top:80px;">
                 {{{body}}}
             </div>
         {{/if}}

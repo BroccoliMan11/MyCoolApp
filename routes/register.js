@@ -38,7 +38,7 @@ router.post('/', async (req, res) => {
     }
     
     if (validationErrors.length !== 0){
-        return res.render('register', {page: 'registration error', errors: validationErrors});
+        return res.render('register', {page: 'register', errors: validationErrors});
     }
 
     await bcrypt.hash(password, saltRounds, async (err, hashedPassword) => {

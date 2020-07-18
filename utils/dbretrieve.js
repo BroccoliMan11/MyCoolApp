@@ -1,6 +1,4 @@
 const db = require('../database');
-const { groupIdNotInInvitations } = require('./middlewares');
-const { addNewGroupMessage } = require('./dbmanipulate');
 
 /*Summary: gets target user's info from database
 Input: userId = ID of target user (STRING)
@@ -154,7 +152,7 @@ async function getGroupMessagesFormatted (groupId, amountLoadng, currentMessageI
     }
     return { newMessageId: (oldestMessageReached) ? allMessageIds[allMessageIds.length - 1]: allMessageIds[selectedMessageIndex],
              nextGroupMessages: nextGroupMessages }
-    }
+}
 
 module.exports = {
     getUserInfo,

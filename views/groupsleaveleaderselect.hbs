@@ -1,15 +1,17 @@
-<a href="/groups/all/{{selectedChannelId}}">Go Back</a>
+<div class="container">
+    <a href="/groups/all/{{selectedChannelId}}" class="btn btn-warning btn-sm">Go Back</a>
 
-{{#if errroMessage}}
-    <div class="alert alert-danger">
-        {{errorMessage}}
-    </div>
-{{/if}}
+    {{#if errroMessage}}
+        <div class="alert alert-danger">
+            {{errorMessage}}
+        </div>
+    {{/if}}
 
-<form method="POST", action="/groups/all/{{selectedChannelId}}/leave/leaderselect">
-    <div class="form-group">
-        <label for="groupMemberName">Promote To Leader:</label>
-        <input type="text" name="groupMemberName" class="form-control" placeholder="Group Member Username">       
-    </div>
-    <button type="submit" class="btn btn-primary">Submit</button>
-</form>
+    <form method="POST", action="/groups/all/{{selectedChannelId}}/leave/leaderselect">
+        <div class="form-group">
+            <label for="groupMemberName">Promote To Leader:</label>
+            <input type="text" name="groupMemberName" class="form-control" placeholder="Group Member Username">       
+        </div>
+        <button type="submit" class="btn btn-danger">Submit</button>
+    </form>
+</div>

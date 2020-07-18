@@ -17,7 +17,6 @@ let currentMessageId;
 
 /*Summary: append messages to message container*/
 socket.on('message', message => {
-    console.log(message);
     const isAtBottom = (messageContainer.scrollHeight - messageContainer.scrollTop === messageContainer.clientHeight);
     outputMessage(message, true);
     if (isAtBottom){
@@ -27,9 +26,15 @@ socket.on('message', message => {
 
 /*Summary: load messages into message container (appending to bottom)*/
 socket.on('loadMessages', (messages) => {
+    const initialScrollHeight = messageContainer.scrollHeight;
+    console.log(`initial scroll top: ${initialScrollHeight}`);
     messages.nextGroupMessages.forEach(message => outputMessage(message, false));
+    const finalScrollHeight = messageContainer.scrollHeight;
+    console.log(`final scroll top: ${finalScrollHeight}`);
     if (!currentMessageId){
         messageContainer.scrollTop = messageContainer.scrollHeight;
+    } else {
+        messageContainer.scrollTop = finalScrollHeight - initialScrollHeight;
     }
     currentMessageId = messages.newMessageId;
 });
@@ -60,15 +65,10 @@ function outputMessage(message, toBottom) {
     const timeOptions = { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit"}
     const timeString = new Date(message.time).toLocaleTimeString([], timeOptions);
     messageElement.innerText = `${message.username} (${timeString}): ${message.text}`;
+    messageElement.style.color = "white";
     if (toBottom) {
-        console.log("appending to bottom");
         messageContainer.append(messageElement);
     }else{
         messageContainer.insertBefore(messageElement, messageContainer.firstElementChild);
     }
-}
-
-/*Summary: switches the selected group*/
-function switchChannel(channelGroup, channelId){
-    window.location.replace(`/${channelGroup}/all/${channelId}`);
 }

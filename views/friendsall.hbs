@@ -1,17 +1,18 @@
 {{#if friendsInfo}}
-    <div id="friends-container">
+    <div class="column channels-container channels-column list-group">
         {{#each friendsInfo}}
-            <div class="friend" onclick="switchChannel('friends','{{this.channelId}}')">
-                <p>{{this.id}} {{this.username}}</p>
-            </div>
+            <a href="/friends/all/{{this.channelId}}" class="list-group-item list-group-item-action">
+                {{this.id}} {{this.username}}
+            </a>
         {{/each}}
     </div>
-    <div id="message-container" class="message-log"></div>
-    <form id="send-container">
-        <input type="text" name="message" id="message-input">
-        <button type="submit" id="send-button">Send</button>
-    </form>
-
+    <div class="column message-column">
+        <div id="message-container" class="message-log"></div>
+        <form id="send-container" class="form-inline">
+            <textarea class="form-control submit-textarea" name="message" id="message-input" style="width:80%;margin: 20px 0 10px 0;"></textarea>
+            <button type="submit" class="btn btn-success" id="send-button" style="margin:auto;width:15%">Send</button>
+        </form>
+    </div>
     <script src="/socket.io/socket.io.js"></script>
     <script src="/public/js/chat.js"></script>
 {{else}}
