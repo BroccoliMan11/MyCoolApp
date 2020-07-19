@@ -1,6 +1,6 @@
 <div class="container">
     {{#if requestFriendsInfo}}
-        <ul id="requests-container" class="list-group" style="height:460px;overflow:hidden auto">
+        <ul id="requests-container" class="list-group requests">
             {{#each requestFriendsInfo}}
                 <li class="list-group-item" user_id="{{this.id}}">
                     <p style="color:inherit">{{this.id}} {{this.username}}</p>

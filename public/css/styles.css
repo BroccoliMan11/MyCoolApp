@@ -12,23 +12,22 @@
     color: white;
 }
 
-.form-control {
-    background-color:lightgray;
-}
-/* 
-.form-control:hover {
-    box-shadow: 5px 5px 5px 5px greenyellow;
-} */
-
 body {
     overflow: hidden;
     background-color: rgb(80, 80, 80);
 }
 
-.row:after{
-    content: "";
-    display: table;
-    clear: both;
+.form-control {
+    background-color:lightgray;
+}
+
+.spinner-box {
+    color:greenyellow;
+    border:lightgrey 2px solid;
+}
+
+.spinner-border {
+    color:greenyellow;
 }
 
 .column {
@@ -43,7 +42,7 @@ body {
 
 .submit-textarea {
     resize: none;
-    width: 80%;
+    width: 80% !important;
 }
 
 .channels-container {
@@ -67,6 +66,7 @@ body {
 
 .list-group-item-action:hover {
     background-color: #218838;
+    border-color: #1a6d2d;
     color: white;
 }
 
@@ -75,10 +75,13 @@ body {
     box-shadow: 0 0 0 0.2rem rgba(0, 255, 34, 0.25);
 }
 
-.friend {
-    border: black solid 1px;
-    box-sizing: border-box;
-    padding: 10px;
+.requests {
+    height: 460px;
+    overflow: hidden auto"
+}
+
+.btn-back {
+    margin-bottom: 20px;
 }
 
 ::-webkit-scrollbar{

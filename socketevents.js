@@ -9,8 +9,8 @@ module.exports = (io) => {
         socket.on('joinChannel', async ({userId, channelId}) => {
             const userSocket = userJoin(socket.id, userId, channelId);
             socket.join(userSocket.channelId);
-            const messages = await getGroupMessagesFormatted(userSocket.channelId, 50, false);
-            if (messages) socket.emit('loadMessages', messages);
+            const messages = await getGroupMessagesFormatted(userSocket.channelId, 50, undefined);
+            socket.emit('loadMessages', messages);
         });
 
         /*Summary: listen if user sent a mesage => send back formatted message => add message to database*/
@@ -35,7 +35,7 @@ module.exports = (io) => {
         socket.on('scrolledTop', async (nextMessageId) => {
             const userSocket = getCurrentUser(socket.id);
             const messages = await getGroupMessagesFormatted(userSocket.channelId, 50, nextMessageId);
-            if (messages) socket.emit('loadMessages', messages);
+            socket.emit('loadMessages', messages);
         });
     });
 }

@@ -1,6 +1,6 @@
 <div class="container">
     {{#if inviteGroupsInfo}}
-        <ul id="invitations-container" class="list-group" style="height:460px;overflow:hidden auto">
+        <ul id="invitations-container" class="list-group requests">
             {{#each inviteGroupsInfo}}
                 <li class="list-group-item" group_id="{{this.id}}">
                     <p style="color:inherit">{{this.id}} {{this.name}}</p>

@@ -33,8 +33,17 @@ router.get('/all/:channelId',
     notInDMChannel(),
 
     async (req, res) => {
+        const selectedChannelId = req.params.channelId;
         const friendsInfo = await getFriendsInfoFormatted(req.user.friends);
-        return res.render('friendsall', { page: 'friends', subpage: 'all', friendsInfo: friendsInfo });
+        return res.render(
+            'friendsall', 
+            { 
+                page: 'friends', 
+                subpage: 'all', 
+                friendsInfo: friendsInfo,
+                selectedChannelId: selectedChannelId
+            }
+        );
     }
 );
 

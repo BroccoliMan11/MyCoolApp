@@ -1,22 +1,25 @@
 {{#if groupsInfo}}
     <div class="column channels-container channels-column list-group">
         {{#each groupsInfo}}
-            <a href="/groups/all/{{this.id}}" class="list-group-item list-group-item-action">
+            <a href="/groups/all/{{this.id}}" class="list-group-item list-group-item-action
+            {{#iff ../selectedChannelId '===' this.id}}
+                active
+            {{/iff}}">
                 {{this.id}} {{this.name}}
             </a>
         {{/each}}
     </div>
     <div class="column message-column">
         <div id="message-container" class="message-log">
-            <div id="loading-spinner" class="text-center" style="color:greenyellow;border:lightgrey 2px solid">
-                <div class="spinner-border spinner-border-sm" style="color:greenyellow" role="status">
+            <div id="spinner-box" class="text-center spinner-box">
+                <div class="spinner-border spinner-border-sm" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>
                 Loading...
             </div>
         </div>
         <form id="send-container" class="form-inline">
-            <textarea class="form-control submit-textarea" name="message" id="message-input" style="width: 80%;margin: 10px 0 10px 0;"></textarea>
+            <textarea class="form-control submit-textarea" name="message" id="message-input" style="margin: 10px 0 10px 0;"></textarea>
             <button type="submit" class="btn btn-success" id="send-button" style="margin:auto;width:15%">Send</button>
         </form>
         <div>

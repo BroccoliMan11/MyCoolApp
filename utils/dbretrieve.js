@@ -121,18 +121,26 @@ Inputs: groupID = ID of target group (STRING)
 Output: messages to be loaded*/
 async function getGroupMessagesFormatted (groupId, amountLoadng, currentMessageId) {
     const messageLog = (await getGroupInfo(groupId)).messageLog;
-    if (!messageLog) return undefined;
+
+    const emptyMessageChunk = { 
+        newMessageId: currentMessageId, 
+        nextGroupMessages: [], 
+        oldestMessageReached: true 
+    }
+   
+    if (!messageLog) {
+        return emptyMessageChunk;
+    }
+
+    const allMessageIds = Object.keys(messageLog).reverse();
+    const allMessageData = Object.values(messageLog).reverse();
+
+    if (currentMessageId == allMessageIds[allMessageIds.length - 1]){
+        return emptyMessageChunk;
+    }
 
     const savedMemberData = {};
     const nextGroupMessages = [];
-
-    const allMessageIds = Object.keys(messageLog).reverse();
-
-    if (currentMessageId == allMessageIds[allMessageIds.length - 1]){
-        return { newMessageId: currentMessageId, nextGroupMessages: nextGroupMessages, oldestMessageReached: true };
-    }
-
-    const allMessageData = Object.values(messageLog).reverse();
 
     const startLoadIndex = (currentMessageId) ? allMessageIds.findIndex((id) => id === currentMessageId) + 1 : 0;
 
@@ -155,7 +163,7 @@ async function getGroupMessagesFormatted (groupId, amountLoadng, currentMessageI
             time: selectedMessage.time 
         });
     }
-    
+
     const newMessageId = (oldestMessageReached) ? allMessageIds[allMessageIds.length - 1]: allMessageIds[selectedMessageIndex]
     return { newMessageId: newMessageId, nextGroupMessages: nextGroupMessages, oldestMessageReached }
 }

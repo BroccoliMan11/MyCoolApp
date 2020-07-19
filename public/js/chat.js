@@ -3,7 +3,7 @@ const socket = io(); //socket emit and listen
 const messageContainer = document.querySelector('#message-container'); //container to display messages in
 const messageForm = document.querySelector("#send-container"); //the whole form to submit messages 
 const messageInput = document.querySelector("#message-input"); //the actual messgae input textbox (inside "messageForm")
-const loading = document.querySelector("#loading-spinner"); //the spinning icon
+const loading = document.querySelector("#spinner-box"); //the spinning icon
 
 //message index selected (used to see up to what index messgaes are loaded, this is for loading batches of messages)
 let currentMessageId;
@@ -27,34 +27,39 @@ socket.on('message', message => {
 
 /*Summary: load messages into message container (appending to bottom)*/
 socket.on('loadMessages', (messages) => {
+    console.log(messages);
     const initialScrollHeight = messageContainer.scrollHeight;
-    console.log(`initial scroll top: ${initialScrollHeight}`);
     messages.nextGroupMessages.forEach(message => outputMessage(message, false));
     const finalScrollHeight = messageContainer.scrollHeight;
-    console.log(`final scroll top: ${finalScrollHeight}`);
+    if (messages.oldestMessageReached){
+        loading.remove();
+    }
     if (!currentMessageId){
         messageContainer.scrollTop = messageContainer.scrollHeight;
     } else {
         messageContainer.scrollTop = finalScrollHeight - initialScrollHeight;
-        if (messages.oldestMessageReached){
-            loading.remove();
-        }
     }
     currentMessageId = messages.newMessageId;
+});
+
+messageInput.addEventListener('keyup', (e) => {
+    if (e.keyCode == 13){
+        sendMessage();
+    }
 });
 
 /*Summary: message input send*/
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
+    sendMessage();
+});
+
+function sendMessage(){
     const message = messageInput.value;
     socket.emit('chatMessage', message);
     messageInput.value = '';
-    console.log(messageContainer.scrollTop);
-    console.log(messageContainer.scrollHeight);
     messageContainer.scrollTop = messageContainer.scrollHeight;
-    console.log(messageContainer.scrollTop);
-    console.log(messageContainer.scrollHeight);
-});
+}
 
 /*Summary: load extra messages*/
 messageContainer.addEventListener('scroll', () => {
