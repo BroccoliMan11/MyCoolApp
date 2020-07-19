@@ -52,11 +52,16 @@ async function leaveGroup(leavingUserId, groupId){
 /*Summary: delete group
 Inputs: groupId = ID of group deleting (STRING)*/
 async function deleteGroup(groupId){
-    const allGroupMemberIds = Object.keys((await getGroupInfo(groupId)).members);
-    for await(memberId of allGroupMemberIds){
-        await leaveGroup(memberId, groupId);
+    const groupInfo = await getGroupInfo(groupId);
+    const allGroupMemberIds = Object.keys(groupInfo.members);
+    const allInvitedUserIds = groupInfo.usersInvited;
+    for (userId of allInvitedUserIds){
+        db.ref(`users/${userId}/groupInvitations/${groupId}`).remove();
     }
-    db.ref(`channels/${groupId}`).remove();
+    for (memberId of allGroupMemberIds){
+        leaveGroup(memberId, groupId);
+    }
+    removeChannel(groupId);
 }
 
 /*Summary: change member's role in database
@@ -72,6 +77,7 @@ Inputs: userId = ID of user removing invitation from (STRING)
         removingGroupId = group ID removing from invitations (STRING)*/
 async function removeGroupInvitation(userId, removingGroupId){
     db.ref(`users/${userId}/groupInvitations/${removingGroupId}`).remove();
+    db.ref(`channels/${removingGroupId}/usersInvited/${userId}`).remove();
 }
 
 /*Summary: remove channel from database
@@ -101,6 +107,7 @@ Inputs: recieverId = ID of user who will recieve the invitation (STRING)
  */
 async function sendGroupInvitation(recieverId, groupId){
     db.ref(`users/${recieverId}/groupInvitations/${groupId}`).set(true);
+    db.ref(`channels/${groupId}/usersInvited/${recieverId}`).set(true);
 }
 
 /*Summary remove user pair as friends

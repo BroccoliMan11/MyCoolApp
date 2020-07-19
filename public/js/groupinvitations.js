@@ -5,9 +5,10 @@ function acceptGroupInvitation(id){
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', `/groups/invitations/accept/${id}`);
     xhttp.onload = function() {
-        if (xhttp.status >= 200 && xhttp.status < 400){
-            removeInvitationDiv(id);
+        if (!(xhttp.status >= 200 && xhttp.status < 400)){
+            $("#invalidInvitation").modal('show');
         }
+        removeInvitationDiv(id);
     }
     xhttp.send();
 }
@@ -19,9 +20,10 @@ function rejectGroupInvitation(id){
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', `/groups/invitations/reject/${id}`);
     xhttp.onload = function() {
-        if (xhttp.status >= 200 && xhttp.status < 400){
-            removeInvitationDiv(id);
+        if (!(xhttp.status >= 200 && xhttp.status < 400)){
+            $("#invalidInvitation").modal('show');
         }
+        removeInvitationDiv(id);
     }
     xhttp.send();
 }
@@ -32,10 +34,12 @@ Input: id = selected group id
 2. if there is not group invitation left => display text "No group invitations"
 */
 function removeInvitationDiv(id){
-    const div = document.querySelector(`[group_id="${id}"]`);
-    const requestContainer = document.querySelector("#invitations-container");
-    requestContainer.removeChild(div);
-    if (requestContainer.childElementCount === 0){
-        requestContainer.textContent = "no group invitations"
-    }
+    const invitation = $(`[group_id="${id}"]`);
+    const container = $("#invitations-container");
+    invitation.fadeOut(200, () => {
+        invitation.remove();
+        if (container.children().length === 0){
+            container.text('No group invitations');
+        }
+    });
 }

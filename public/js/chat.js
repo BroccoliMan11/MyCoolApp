@@ -28,12 +28,12 @@ socket.on('message', message => {
 /*Summary: load messages into message container (appending to bottom)*/
 socket.on('loadMessages', (messages) => {
     console.log(messages);
+    if (messages.oldestMessageReached){
+        loading.style.display = "none";
+    }
     const initialScrollHeight = messageContainer.scrollHeight;
     messages.nextGroupMessages.forEach(message => outputMessage(message, false));
     const finalScrollHeight = messageContainer.scrollHeight;
-    if (messages.oldestMessageReached){
-        loading.remove();
-    }
     if (!currentMessageId){
         messageContainer.scrollTop = messageContainer.scrollHeight;
     } else {
@@ -42,7 +42,7 @@ socket.on('loadMessages', (messages) => {
     currentMessageId = messages.newMessageId;
 });
 
-messageInput.addEventListener('keyup', (e) => {
+messageInput.addEventListener('keydown', (e) => {
     if (e.keyCode == 13){
         sendMessage();
     }
@@ -78,6 +78,6 @@ function outputMessage(message, toBottom) {
     if (toBottom) {
         messageContainer.append(messageElement);
     }else{
-        messageContainer.insertBefore(messageElement, messageContainer.childNodes[2]);
+        messageContainer.insertBefore(messageElement, loading.nextSibling);
     }
 }

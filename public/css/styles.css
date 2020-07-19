@@ -48,7 +48,8 @@ body {
 .channels-container {
     width: 20%;
     height: 465px;
-    overflow: hidden auto;
+    overflow-x: hidden;
+    overflow-y: auto;
 }
 
 .navbar {
@@ -69,7 +70,7 @@ body {
     border-color: #1a6d2d;
     color: white;
 }
-
+ 
 .form-control:focus {
     border-color: greenyellow;
     box-shadow: 0 0 0 0.2rem rgba(0, 255, 34, 0.25);

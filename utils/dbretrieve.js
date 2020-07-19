@@ -27,7 +27,16 @@ function properFormatUserInfo (userInfo){
 Input: groupId = ID of target group (STRING)
 Output: target group's details (OBJECT)*/
 async function getGroupInfo (groupId) {
-    return (await db.ref(`channels/${groupId}`).once('value')).val();
+    let groupInfo = (await db.ref(`channels/${groupId}`).once('value')).val();
+    return properFormatGroupInfo(groupInfo);
+}
+
+/* Summary: returns formmated group's info 
+Input: groupInfo = group info to be formatted (OBJECT)
+Output: formatted group info (OBJECT)*/
+function properFormatGroupInfo (groupInfo){
+    if (groupInfo.usersInvited) groupInfo.usersInvited = Object.keys(groupInfo.usersInvited);
+    return groupInfo;
 }
 
 /*Summary: formats user's friends dictionary into a list of user friends' details
@@ -120,7 +129,12 @@ Inputs: groupID = ID of target group (STRING)
         amountLoading = amount of messages loading (INTEGER)
 Output: messages to be loaded*/
 async function getGroupMessagesFormatted (groupId, amountLoadng, currentMessageId) {
-    const messageLog = (await getGroupInfo(groupId)).messageLog;
+    const groupFound = await getGroupInfo(groupId);
+
+    if (!groupFound){
+        return undefined;
+    }
+    const messageLog = groupFound.messageLog;
 
     const emptyMessageChunk = { 
         newMessageId: currentMessageId, 

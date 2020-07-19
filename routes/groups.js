@@ -63,7 +63,14 @@ router.get('/all/:groupId/invite',
     
     (req, res) => {
         const selectedGroupId = req.params.groupId;
-        return res.render('groupsinvite', { page: 'groups', subpage: 'all', selectedChannelId: selectedGroupId });
+        return res.render(
+            'groupsinvite', 
+            { 
+                page: 'groups', 
+                subpage: 'all', 
+                selectedChannelId: selectedGroupId 
+            }
+        );
     }
 );
 
@@ -178,7 +185,7 @@ router.post('/invitations/accept/:groupId',
     
     async (req, res) => {
         const selectedGroupId = req.params.groupId;
-        await joinGroup(req.user.id, selectedGroupId, 'member');
+        joinGroup(req.user.id, selectedGroupId, 'member');
         return res.status(200).send('Group was added to group list!');
     }
 );
