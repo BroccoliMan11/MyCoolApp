@@ -7,7 +7,14 @@
         {{/each}}
     </div>
     <div class="column message-column">
-        <div id="message-container" class="message-log"></div>
+        <div id="message-container" class="message-log">
+            <div id="loading-spinner" class="text-center" style="color:greenyellow;border:lightgrey 2px solid">
+                <div class="spinner-border spinner-border-sm" style="color:greenyellow" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+                Loading...
+            </div>
+        </div>
         <form id="send-container" class="form-inline">
             <textarea class="form-control submit-textarea" name="message" id="message-input" style="width: 80%;margin: 10px 0 10px 0;"></textarea>
             <button type="submit" class="btn btn-success" id="send-button" style="margin:auto;width:15%">Send</button>

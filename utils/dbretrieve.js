@@ -127,6 +127,11 @@ async function getGroupMessagesFormatted (groupId, amountLoadng, currentMessageI
     const nextGroupMessages = [];
 
     const allMessageIds = Object.keys(messageLog).reverse();
+
+    if (currentMessageId == allMessageIds[allMessageIds.length - 1]){
+        return { newMessageId: currentMessageId, nextGroupMessages: nextGroupMessages, oldestMessageReached: true };
+    }
+
     const allMessageData = Object.values(messageLog).reverse();
 
     const startLoadIndex = (currentMessageId) ? allMessageIds.findIndex((id) => id === currentMessageId) + 1 : 0;
@@ -150,8 +155,9 @@ async function getGroupMessagesFormatted (groupId, amountLoadng, currentMessageI
             time: selectedMessage.time 
         });
     }
-    return { newMessageId: (oldestMessageReached) ? allMessageIds[allMessageIds.length - 1]: allMessageIds[selectedMessageIndex],
-             nextGroupMessages: nextGroupMessages }
+    
+    const newMessageId = (oldestMessageReached) ? allMessageIds[allMessageIds.length - 1]: allMessageIds[selectedMessageIndex]
+    return { newMessageId: newMessageId, nextGroupMessages: nextGroupMessages, oldestMessageReached }
 }
 
 module.exports = {

@@ -3,6 +3,7 @@ const socket = io(); //socket emit and listen
 const messageContainer = document.querySelector('#message-container'); //container to display messages in
 const messageForm = document.querySelector("#send-container"); //the whole form to submit messages 
 const messageInput = document.querySelector("#message-input"); //the actual messgae input textbox (inside "messageForm")
+const loading = document.querySelector("#loading-spinner"); //the spinning icon
 
 //message index selected (used to see up to what index messgaes are loaded, this is for loading batches of messages)
 let currentMessageId;
@@ -35,6 +36,9 @@ socket.on('loadMessages', (messages) => {
         messageContainer.scrollTop = messageContainer.scrollHeight;
     } else {
         messageContainer.scrollTop = finalScrollHeight - initialScrollHeight;
+        if (messages.oldestMessageReached){
+            loading.remove();
+        }
     }
     currentMessageId = messages.newMessageId;
 });
@@ -69,6 +73,6 @@ function outputMessage(message, toBottom) {
     if (toBottom) {
         messageContainer.append(messageElement);
     }else{
-        messageContainer.insertBefore(messageElement, messageContainer.firstElementChild);
+        messageContainer.insertBefore(messageElement, messageContainer.childNodes[2]);
     }
 }
