@@ -44,6 +44,7 @@ socket.on('loadMessages', (messages) => {
 
 messageInput.addEventListener('keydown', (e) => {
     if (e.keyCode == 13){
+        e.preventDefault();
         sendMessage();
     }
 });
@@ -71,10 +72,14 @@ messageContainer.addEventListener('scroll', () => {
 /*Summary: append message to message container*/
 function outputMessage(message, toBottom) {
     const messageElement = document.createElement('div');
+    const messageHolder = document.createElement('p');
     const timeOptions = { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit"}
     const timeString = new Date(message.time).toLocaleTimeString([], timeOptions);
-    messageElement.innerText = `${message.username} (${timeString}): ${message.text}`;
-    messageElement.style.color = "white";
+    messageElement.innerHTML = `<p style="margin:0"><span style="color:greenyellow;margin-right:0.25rem">${message.username}</span> <small style="color:lightgrey;margin-left:0.25rem">${timeString}</small></p>`;
+    messageHolder.innerText = message.text;
+    messageElement.append(messageHolder);
+    // messageElement.innerText = `${message.username} (${timeString}): ${message.text}`;
+    // messageElement.style.color = "white";
     if (toBottom) {
         messageContainer.append(messageElement);
     }else{
