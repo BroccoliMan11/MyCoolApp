@@ -1,20 +1,11 @@
-/*set up database
-*THIS IS WRONG! I will need to import "firebase-admin" and do the proper configurations*
-*/
+/*set up database*/
+const admin = require('firebase-admin');
 
-const firebase = require('firebase');
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-const firebaseConfig = {
-    apiKey: process.env.DB_API_KEY ,
-    authDomain: process.env.DB_AUTH_DOMAIN,
-    databaseURL: process.env.DB_URL,
-    projectId: process.env.DB_PROJECT_ID,
-    storageBucket: process.env.DB_STORAGE_BUCKET,
-    messagingSenderId: process.env.DB_MESSAGING_SENDER_ID,
-    appId: process.env.DB_APP_ID,
-    measurementId: process.env.DB_MEASUREMENT_ID
-};
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: 'https://mycoolapp-49429.firebaseio.com/'
+});
 
-const db = firebase.initializeApp(firebaseConfig).database();
-
-module.exports = db;
+module.exports = admin.database();

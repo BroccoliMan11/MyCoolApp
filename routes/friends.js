@@ -185,6 +185,18 @@ router.post('/remove', authenticationMiddleware(), async(req, res) => {
         );
     }
     removeFriends(req.user.id, friendFoundByUsername.id, friendFoundByUsername.channelId);
+
+    const { userLeave, getSocketsByUserId } = require('../utils/usersockets');
+    const io = require('../socketevents').getSocketIO();
+
+    const leavingUserSockets = getSocketsByUserId(friendFoundByUsername.id);
+
+    leavingUserSockets.forEach( userSocket => {
+        io.sockets.connected[userSocket.socketId].emit('leaveUser', { message: 'you have been removed as a friend!' });
+        io.sockets.connected[userSocket.socketId].leave(friendFoundByUsername.channelId);
+        userLeave(userSocket.id);
+    });
+
     return res.render(
         'friendsremove',
         {

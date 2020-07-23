@@ -4,19 +4,8 @@ const path = require('path'); //for combining path strings
 const express = require('express');
 const app = express(); //create a server
 
-//create websocket and link to server
-const http = require('http');
-const server = http.createServer(app);
-const socketio = require('socket.io');
-const io = socketio(server);
-require('./socketevents')(io);
-
 //static folder (client files)
 app.use('/public', express.static(path.join(__dirname, 'public')));
-
-//listen to PORT
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, console.log(`Server is running on port ${PORT}`));
 
 //use express-validator (for validation)
 const expressValidator = require('express-validator');
@@ -30,10 +19,32 @@ app.use(bodyParser.urlencoded({ extended: false}));
 //get passport (for validation)
 const passport = require('./utils/passport');
 
-app.use(require('./utils/session'));
+const session = require('express-session');
+const db = require('./database');
+const FirebaseStore = require('connect-session-firebase')(session);
+
+const sessionMiddleware = session({
+    store: new FirebaseStore({
+        database: db,
+    }),
+    secret: 'hdakhdewkfsdnbhjsegyw',
+    resave: false,
+    saveUninitialized: false
+});
+
+app.use(sessionMiddleware);
 
 app.use(passport.initialize());
 app.use(passport.session());
+
+//create websocket and link to server
+const http = require('http');
+const server = http.createServer(app);
+require('./socketevents').initalizeSocketIO(server, sessionMiddleware);
+
+//listen to PORT
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, console.log(`Server is running on port ${PORT}`));
 
 //set "isAuthenticated" for the handlebars file
 app.use((req, res, next) => {

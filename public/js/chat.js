@@ -8,13 +8,17 @@ const loading = document.querySelector("#spinner-box"); //the spinning icon
 //message index selected (used to see up to what index messgaes are loaded, this is for loading batches of messages)
 let currentMessageId;
 
-/*Summary: join the channel (In front end for now)*/
-(async function joinChannel() {
-    const selectedChannelId = window.location.pathname.split('/').pop();
-    const response = await fetch('/getuserinfo');
-    const user = await response.json();
-    socket.emit('joinChannel', {userId: user.id, channelId: selectedChannelId});
-})();
+/*Summary: join the channel*/
+const selectedChannelId = window.location.pathname.split('/').pop();
+socket.emit('enterChannel', selectedChannelId)
+
+socket.on('noSession', () => {
+    window.location.href = '/login';
+});
+
+socket.on('leaveUser', () => {
+    window.location.href = window.location.pathname.split('/').splice(0, 3).join('/');
+});
 
 /*Summary: append messages to message container*/
 socket.on('message', message => {
