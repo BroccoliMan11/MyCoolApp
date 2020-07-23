@@ -351,9 +351,11 @@ router.post('/all/:groupId/kick',
         const leavingUserSockets = getSocketsByUserId(kickingMemberFoundByUsername.id);
 
         leavingUserSockets.forEach( userSocket => {
-            io.sockets.connected[userSocket.socketId].emit('leaveUser', { message: 'you have been kicked from the group!' });
-            io.sockets.connected[userSocket.socketId].leave(selectedGroupId);
-            userLeave(userSocket.id);
+            if (userSocket.channelId === selectedGroupId){
+                io.sockets.connected[userSocket.socketId].emit('leaveUser', { message: 'you have been kicked from the group!' });
+                io.sockets.connected[userSocket.socketId].leave(selectedGroupId);
+                userLeave(userSocket.id);
+            }
         });
 
         res.render(
