@@ -29,6 +29,10 @@ function initalizeSocketIO(server, sessionMiddleware){
 
     io.on("connection", socket => {
 
+        if (!socket.request.session.passport){
+            socket.emit('noSession');
+        }
+        
         const userId = socket.request.session.passport.user;
         let selectedChannelId;
 

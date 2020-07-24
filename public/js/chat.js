@@ -12,10 +12,12 @@ let currentMessageId;
 const selectedChannelId = window.location.pathname.split('/').pop();
 socket.emit('enterChannel', selectedChannelId)
 
+/*Summary: go to login page (when the user session does not exist)*/
 socket.on('noSession', () => {
     window.location.href = '/login';
 });
 
+/*Summary: reload page to remove user from channel page*/
 socket.on('leaveUser', () => {
     window.location.href = window.location.pathname.split('/').splice(0, 3).join('/');
 });
@@ -46,6 +48,7 @@ socket.on('loadMessages', (messages) => {
     currentMessageId = messages.newMessageId;
 });
 
+/*Sumary: message input send (textarea entered)*/
 messageInput.addEventListener('keydown', (e) => {
     if (e.keyCode == 13){
         e.preventDefault();
@@ -53,12 +56,13 @@ messageInput.addEventListener('keydown', (e) => {
     }
 });
 
-/*Summary: message input send*/
+/*Summary: message input send (button submit)*/
 messageForm.addEventListener('submit', (e) => {
     e.preventDefault();
     sendMessage();
 });
 
+/*Summary: send message, clear textarea and scroll to bottom*/
 function sendMessage(){
     const message = messageInput.value;
     socket.emit('chatMessage', message);
@@ -82,8 +86,6 @@ function outputMessage(message, toBottom) {
     messageElement.innerHTML = `<p style="margin:0"><span style="color:greenyellow;margin-right:0.25rem">${message.username}</span> <small style="color:lightgrey;margin-left:0.25rem">${timeString}</small></p>`;
     messageHolder.innerText = message.text;
     messageElement.append(messageHolder);
-    // messageElement.innerText = `${message.username} (${timeString}): ${message.text}`;
-    // messageElement.style.color = "white";
     if (toBottom) {
         messageContainer.append(messageElement);
     }else{

@@ -1,8 +1,12 @@
-require('dotenv').config(); //parses environment variables
+//parses environment variables
+require('dotenv').config(); 
 
-const path = require('path'); //for combining path strings
+//for combining path strings
+const path = require('path'); 
+
+//create a server
 const express = require('express');
-const app = express(); //create a server
+const app = express(); 
 
 //static folder (client files)
 app.use('/public', express.static(path.join(__dirname, 'public')));
@@ -23,11 +27,12 @@ const session = require('express-session');
 const db = require('./database');
 const FirebaseStore = require('connect-session-firebase')(session);
 
+//initialize session middleware
 const sessionMiddleware = session({
     store: new FirebaseStore({
         database: db,
     }),
-    secret: 'hdakhdewkfsdnbhjsegyw',
+    secret: process.env.SESSION_SECRET_KEY,
     resave: false,
     saveUninitialized: false
 });
