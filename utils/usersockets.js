@@ -12,7 +12,7 @@ function getUserBySocketId(socketId) {
     return userSockets.find(userSocket => userSocket.socketId === socketId);
 }
 
-/*Summary: remove socket by user ID*/
+/*Summary: remove socket by socket ID*/
 function userLeave(socketId) {
     const index = userSockets.findIndex(userSocket => userSocket.socketId === socketId);
     if (index !== -1){
@@ -20,6 +20,7 @@ function userLeave(socketId) {
     }
 }
 
+/*Summary: get all socket ids by user ID*/
 function getSocketsByUserId(userId){
     return userSockets.filter(userSocket => userSocket.userId === userId);
 }

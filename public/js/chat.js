@@ -24,28 +24,32 @@ socket.on('leaveUser', () => {
 
 /*Summary: append messages to message container*/
 socket.on('message', message => {
+    console.log(message);
     const isAtBottom = (messageContainer.scrollHeight - messageContainer.scrollTop === messageContainer.clientHeight);
     outputMessage(message, true);
     if (isAtBottom){
         messageContainer.scrollTop = messageContainer.scrollHeight;
     }
+    if (!currentMessageId) {
+        currentMessageId = message.messageId;
+    }
 });
 
 /*Summary: load messages into message container (appending to bottom)*/
-socket.on('loadMessages', (messages) => {
-    console.log(messages);
-    if (messages.oldestMessageReached){
+socket.on('loadMessages', (messageLog) => {
+    console.log(messageLog);
+    if (messageLog.allMessagesLoaded){
         loading.style.display = "none";
     }
     const initialScrollHeight = messageContainer.scrollHeight;
-    messages.nextGroupMessages.forEach(message => outputMessage(message, false));
+    messageLog.messages.forEach(message => outputMessage(message, false));
     const finalScrollHeight = messageContainer.scrollHeight;
     if (!currentMessageId){
         messageContainer.scrollTop = messageContainer.scrollHeight;
     } else {
         messageContainer.scrollTop = finalScrollHeight - initialScrollHeight;
     }
-    currentMessageId = messages.newMessageId;
+    currentMessageId = messageLog.newMessageId;
 });
 
 /*Sumary: message input send (textarea entered)*/
@@ -83,7 +87,7 @@ function outputMessage(message, toBottom) {
     const messageHolder = document.createElement('p');
     const timeOptions = { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit"}
     const timeString = new Date(message.time).toLocaleTimeString([], timeOptions);
-    messageElement.innerHTML = `<p style="margin:0"><span style="color:greenyellow;margin-right:0.25rem">${message.username}</span> <small style="color:lightgrey;margin-left:0.25rem">${timeString}</small></p>`;
+    messageElement.innerHTML = `<p style="margin:0"><span style="color:greenyellow;margin-right:0.25rem">${message.user.username}</span> <small style="color:lightgrey;margin-left:0.25rem">${timeString}</small></p>`;
     messageHolder.innerText = message.text;
     messageElement.append(messageHolder);
     if (toBottom) {

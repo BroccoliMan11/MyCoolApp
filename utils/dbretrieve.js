@@ -4,8 +4,9 @@ const db = require('../database');
 Input: userId = ID of target user (STRING)
 Output: target user's details (OBJECT)*/
 async function getUserInfo (userId) {
-    let userInfo = (await db.ref(`users/${userId}`).once('value')).val();
-    return properFormatUserInfo(userInfo);
+    const userRef = await db.ref(`users/${userId}`).once('value');
+    const userInfo = FormatUserInfo(userRef.val());
+    return { ...userInfo, id: userId }
 }
 
 /* Summary: returns formmated user's info 
@@ -16,7 +17,9 @@ NOTE:
     Arrays are stored as dictionaries. 
     When two users edit an array at the same time, the indexing may be changed, therefore users could select wrong items.
     This function formats the dictionary into an array*/
-function properFormatUserInfo (userInfo){
+function FormatUserInfo (userValue){
+    if (!userValue) return;
+    let userInfo = Object.assign({}, userValue);
     if (userInfo.friendRequests) userInfo.friendRequests = Object.keys(userInfo.friendRequests);
     if (userInfo.groupInvitations) userInfo.groupInvitations = Object.keys(userInfo.groupInvitations);
     if (userInfo.groups) userInfo.groups = Object.keys(userInfo.groups);
@@ -27,14 +30,17 @@ function properFormatUserInfo (userInfo){
 Input: groupId = ID of target group (STRING)
 Output: target group's details (OBJECT)*/
 async function getGroupInfo (groupId) {
-    let groupInfo = (await db.ref(`channels/${groupId}`).once('value')).val();
-    return properFormatGroupInfo(groupInfo);
+    const groupRef = await db.ref(`channels/${groupId}`).once('value');
+    const groupInfo = FormatGroupInfo(groupRef.val());
+    return { ...groupInfo, id: groupId }
 }
 
 /* Summary: returns formmated group's info 
 Input: groupInfo = group info to be formatted (OBJECT)
 Output: formatted group info (OBJECT)*/
-function properFormatGroupInfo (groupInfo){
+function FormatGroupInfo (groupVal){
+    if (!groupVal) return;
+    let groupInfo = Object.assign({}, groupVal);
     if (groupInfo.usersInvited) groupInfo.usersInvited = Object.keys(groupInfo.usersInvited);
     return groupInfo;
 }
@@ -82,36 +88,32 @@ async function getGroupInvitationsInfoFormatted (userGroupInvitations) {
 Input: groupID = ID of targetted group (STRING)
 Output: formatted info of target group's members (ARRAY)*/
 async function getGroupMembersInfoFormatted (groupId) {
-    const groupMemberIds = Object.keys((await getGroupInfo(groupId)).members);
+    const groupMemberIds = Object.keys((await db.ref(`channels/${groupId}/members`).once('value')).val());
     return Promise.all(groupMemberIds.map(async (memberId) => {
         return await getUserInfo(memberId);
     }));
-}
-
-/*Summary: get formatted info of all users in the database
-Output: formated info of all users (ARRAY)*/
-async function getAllUsersFormatted() {
-    const allUsersInfo = Object.values((await db.ref('users').once('value')).val());
-    if (!allUsersInfo) return undefined;
-    return allUsersInfo.map( user => { return properFormatUserInfo(user) });
 }
 
 /*Summary: search all users if they have a certain username
 Input: username = username searching (STRING)
 Output: info of found user OR undefined (OBJECT)*/
 async function findUserByUsername (username) {
-    const allUsers = await getAllUsersFormatted();
-    if (!allUsers) return undefined;
-    return allUsers.find((user) => { return user.username === username });
+    const userFoundRef = (await db.ref('users').orderByChild('username').equalTo(username).once('value')).val();
+    if (!userFoundRef) return;
+    const id = Object.keys(userFoundRef)[0];
+    const userInfo = FormatUserInfo(userFoundRef[id]);
+    return {...userInfo, id: id}
 }
 
 /*Summary: search user friends if they have a certain username
 Inputs: username = username searching (STRING)
        userFriends = user friend dictionary (DICTIONARY) 
 Output: info of found user OR undefined (OBJECT)*/
-async function findFriendByUsername (username, userFriends) {
-    const friendsInfo = await getFriendsInfoFormatted(userFriends);
-    return friendsInfo.find((user) => { return user.username === username });
+async function findFriendByUsername (userFriends, username) {
+    const userFound = await findUserByUsername(username);
+    if (!userFound) return;
+    if (!Object.keys(userFriends).includes(userFound.id)) return;
+    return { ...userFound, channelId: userFriends[userFound.id] };
 }
 
 /*Summary: search group members if they have a certain username
@@ -123,63 +125,52 @@ async function findGroupMemberByUsername (groupId, username) {
     return allGroupMembers.find((user) => { return user.username === username });
 }
 
+/*Summary: gets messageLog data from database and formats it
+Inputs: messages = raw message data
+Output: formatted message data*/
+async function formatMessages(messages){
+    let formattedMessages = [];
+    let loadedUsers = {};
+    if (!messages) return [];
+    for ([messageId, messageInfo] of Object.entries(messages)){
+        if (!loadedUsers[messageInfo.userId]){
+            loadedUsers[messageInfo.userId] = {
+                id: messageInfo.userId,
+                username: (await db.ref(`users/${messageInfo.userId}/username`).once('value')).val()
+            };
+        }
+        formattedMessages.unshift({
+            messageId: messageId,
+            user: loadedUsers[messageInfo.userId],
+            ...messageInfo
+        });
+    }
+    return formattedMessages;
+}
+
 /*Summary: retrieve target group messages and format them
 Inputs: groupID = ID of target group (STRING)
         currentMessageId = ID of oldest mesage loaded (STRING)
         amountLoading = amount of messages loading (INTEGER)
 Output: messages to be loaded*/
-async function getGroupMessagesFormatted (groupId, amountLoadng, currentMessageId) {
-    const groupFound = await getGroupInfo(groupId);
-
-    if (!groupFound){
-        return undefined;
+async function getChannelMessages(channelId, amountLoading, currentMessageId){
+    const messageRef = db.ref(`channels/${channelId}/messageLog`);
+    let messages;
+    if (!currentMessageId){
+        messages = (await messageRef.orderByKey().limitToLast(amountLoading).once('value')).val();
+    }else{
+        messages = (await messageRef.orderByKey().endAt(currentMessageId).limitToLast(amountLoading + 1).once('value')).val();
+        delete messages[currentMessageId];
     }
-    const messageLog = groupFound.messageLog;
-
-    const emptyMessageChunk = { 
-        newMessageId: currentMessageId, 
-        nextGroupMessages: [], 
-        oldestMessageReached: true 
+    const formattedMessages  = await formatMessages(messages);
+    if (formattedMessages.length === 0){
+        return {newMessageId: currentMessageId, messages: [], allMessagesLoaded: true}
     }
-   
-    if (!messageLog) {
-        return emptyMessageChunk;
-    }
-
-    const allMessageIds = Object.keys(messageLog).reverse();
-    const allMessageData = Object.values(messageLog).reverse();
-
-    if (currentMessageId == allMessageIds[allMessageIds.length - 1]){
-        return emptyMessageChunk;
-    }
-
-    const savedMemberData = {};
-    const nextGroupMessages = [];
-
-    const startLoadIndex = (currentMessageId) ? allMessageIds.findIndex((id) => id === currentMessageId) + 1 : 0;
-
-    let oldestMessageReached = false;
-    let selectedMessageIndex;
-    for (let offset = 0; offset < amountLoadng ; offset++){
-        selectedMessageIndex = startLoadIndex + offset;
-        if (selectedMessageIndex > allMessageIds.length - 1) 
-        {
-            oldestMessageReached = true;
-            break;
-        }
-        const selectedMessage = allMessageData[selectedMessageIndex];
-        if (!savedMemberData[selectedMessage.userId]){
-            savedMemberData[selectedMessage.userId] = await getUserInfo(selectedMessage.userId);
-        }
-        nextGroupMessages.push({ 
-            username: savedMemberData[selectedMessage.userId].username, 
-            text: selectedMessage.text, 
-            time: selectedMessage.time 
-        });
-    }
-
-    const newMessageId = (oldestMessageReached) ? allMessageIds[allMessageIds.length - 1]: allMessageIds[selectedMessageIndex]
-    return { newMessageId: newMessageId, nextGroupMessages: nextGroupMessages, oldestMessageReached }
+    const firstLoadedMessageId = formattedMessages[formattedMessages.length - 1].messageId;
+    const firstMessage = (await messageRef.orderByKey().limitToFirst(1).once('value')).val();
+    const firstMessageId = Object.keys(firstMessage)[0]
+    const allMessagesLoaded = (!firstMessage || firstMessageId === firstLoadedMessageId) ? true : false;
+    return { newMessageId: firstLoadedMessageId, messages: formattedMessages, allMessagesLoaded: allMessagesLoaded }
 }
 
 module.exports = {
@@ -189,9 +180,8 @@ module.exports = {
     getGroupsInfoFormatted,
     getFriendRequestsInfoFormatted,
     getGroupInvitationsInfoFormatted,
-    getAllUsersFormatted,
     findUserByUsername,
     findFriendByUsername,
     findGroupMemberByUsername,
-    getGroupMessagesFormatted
+    getChannelMessages
 }

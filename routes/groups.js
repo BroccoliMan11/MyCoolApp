@@ -46,7 +46,7 @@ router.get('/all/:groupId',
             { 
                 page: 'groups', 
                 subpage: 'all', 
-                groupsInfo: groupsInfo, 
+                groupsInfo: groupsInfo,
                 selectedChannelId: selectedGroupId,
                 role: userGroupRole
             }
@@ -125,7 +125,7 @@ router.post('/all/:groupId/invite',
             );
         }
         const friendUsername = req.body.friendName;
-        const friendFoundByUsername = await findFriendByUsername(friendUsername, req.user.friends);
+        const friendFoundByUsername = await findFriendByUsername(req.user.friends, friendUsername);
         if (!friendFoundByUsername){
             return res.render(
                 'groupsinvite', 

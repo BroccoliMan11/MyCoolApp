@@ -8,7 +8,6 @@ Input: addingUserData = new user's details (OBJECT)
 Output: new user's detail, including new ID (OBJECT)*/
 async function createNewUser(addingUserData){
     const addedUserId =  db.ref('users').push(addingUserData).key;
-    await db.ref(`users/${addedUserId}/id`).set(addedUserId);
     return {...addingUserData, id: addedUserId };
 }
 
@@ -27,7 +26,6 @@ Input: addingChannelData = new channel's details (OBJECT)
 Output: new channel's details, including new ID (OBJECT)*/
 async function createNewChannel(addingChannelData){
     const addedChannelId = (await db.ref('channels').push(addingChannelData)).key;
-    await db.ref(`channels/${addedChannelId}/id`).set(addedChannelId);
     return { ...addingChannelData, id: addedChannelId };
 }
 
@@ -54,9 +52,10 @@ Inputs: groupId = ID of group deleting (STRING)*/
 async function deleteGroup(groupId){
     const groupInfo = await getGroupInfo(groupId);
     const allGroupMemberIds = Object.keys(groupInfo.members);
-    const allInvitedUserIds = groupInfo.usersInvited;
-    for (userId of allInvitedUserIds){
-        db.ref(`users/${userId}/groupInvitations/${groupId}`).remove();
+    if (groupInfo.usersInvited){
+        for (userId of groupInfo.usersInvited){
+            db.ref(`users/${userId}/groupInvitations/${groupId}`).remove();
+        }
     }
     for (memberId of allGroupMemberIds){
         leaveGroup(memberId, groupId);
@@ -126,7 +125,7 @@ Input: groupId = ID of group which is having the message appended to it's messag
 */
 async function addNewGroupMessage(groupId, message){
     const addedMessageId = await (db.ref(`channels/${groupId}/messageLog`).push(message)).key;
-    db.ref(`channels/${groupId}/messageLog/${addedMessageId}/id`).set(addedMessageId);
+    return { ...message, id: addedMessageId }
 }
 
 module.exports = {

@@ -1,6 +1,4 @@
-/*Summary: accept group invitation
-1. send POST request to server to accept group invitation
-2. if response is okay => remove the "div" element for the accepted invitation*/
+/*Summary: accept group invitation*/
 function acceptGroupInvitation(id){
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', `/groups/invitations/accept/${id}`);
@@ -13,9 +11,7 @@ function acceptGroupInvitation(id){
     xhttp.send();
 }
 
-/*Summary: reject group invitation
-1. send POST request to server to reject group invitation
-2. if response is okay => remove the "div" element for the rejected invitation*/
+/*Summary: reject group invitation*/
 function rejectGroupInvitation(id){
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', `/groups/invitations/reject/${id}`);
@@ -29,10 +25,7 @@ function rejectGroupInvitation(id){
 }
 
 /*Summary: remove invitation "div" element 
-Input: id = selected group id
-1. remove DOM element here the tag "group_id" = "id"
-2. if there is not group invitation left => display text "No group invitations"
-*/
+Input: id = selected group id*/
 function removeInvitationDiv(id){
     const invitation = $(`[group_id="${id}"]`);
     const container = $("#invitations-container");

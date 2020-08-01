@@ -1,6 +1,4 @@
-/*Summary: accept friend request
-1. send POST request to server to accept friend request
-2. if response is okay => remove the "div" element for the accepted request*/
+/*Summary: accept friend request*/
 function acceptFriendRequest(id){
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', `/friends/requests/accept/${id}`);
@@ -12,9 +10,7 @@ function acceptFriendRequest(id){
     xhttp.send();
 }
 
-/*Summary: reject friend request
-1. send POST request to server to reject friend request
-2. if response is okay => remove the "div" element for the rejected request*/
+/*Summary: reject friend request*/
 function rejectFriendRequest(id){
     const xhttp = new XMLHttpRequest();
     xhttp.open('POST', `/friends/requests/reject/${id}`);
@@ -27,10 +23,7 @@ function rejectFriendRequest(id){
 }
 
 /*Summary: remove request "div" element 
-Input: id = selected user id
-1. remove DOM element here the tag "user_id" = "id"
-2. if there is not friend request left => display text "No friend requests"
-*/
+Input: id = selected user id*/
 function removeRequestDiv(id){
     const request = $(`[user_id="${id}"]`);
     const container = $("#requests-container");

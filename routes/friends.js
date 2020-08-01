@@ -173,7 +173,8 @@ router.post('/remove', authenticationMiddleware(), async(req, res) => {
             }
         )
     }
-    const friendFoundByUsername = await findFriendByUsername(friendUsername, req.user.friends);
+    const friendFoundByUsername = await findFriendByUsername(req.user.friends, friendUsername);
+    console.log(friendFoundByUsername);
     if (!friendFoundByUsername){
         return res.render(
             'friendsremove', 
@@ -190,6 +191,8 @@ router.post('/remove', authenticationMiddleware(), async(req, res) => {
     const io = require('../socketevents').getSocketIO();
 
     const leavingUserSockets = getSocketsByUserId(friendFoundByUsername.id);
+
+    console.log(leavingUserSockets);
 
     leavingUserSockets.forEach( userSocket => {
         if (userSocket.channelId === friendFoundByUsername.channelId){

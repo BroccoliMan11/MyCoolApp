@@ -2,9 +2,8 @@ const socketio = require('socket.io');
 
 //functions retrieved from other files
 const { userJoin, userLeave, getUserBySocketId} = require('./utils/usersockets');
-const { getUserInfo, getGroupMessagesFormatted } = require('./utils/dbretrieve');
+const { getUserInfo, getChannelMessages } = require('./utils/dbretrieve');
 const { addNewGroupMessage } = require('./utils/dbmanipulate');
-const usersockets = require('./utils/usersockets');
 
 let io;
 
@@ -32,7 +31,7 @@ function initalizeSocketIO(server, sessionMiddleware){
         if (!socket.request.session.passport){
             socket.emit('noSession');
         }
-        
+
         const userId = socket.request.session.passport.user;
         let selectedChannelId;
 
@@ -45,7 +44,7 @@ function initalizeSocketIO(server, sessionMiddleware){
             selectedChannelId = channelId;
             userJoin(socket.id, userId, selectedChannelId);
             socket.join(selectedChannelId);
-            const messages = await getGroupMessagesFormatted(selectedChannelId, 50, undefined);
+            const messages = await getChannelMessages(selectedChannelId, 50, undefined);
             socket.emit('loadMessages', messages);
         });
 
@@ -64,11 +63,11 @@ function initalizeSocketIO(server, sessionMiddleware){
             const user = await getUserInfo(userSocket.userId);
             const currentTime = Date.now();
 
-            const formattedMessage = { username: user.username, text: text.trimEnd(), time: currentTime }
+            
             const unformattedMessage = { userId: user.id, text: text.trimEnd(), time: currentTime }
-
+            const newGroupMessage = await addNewGroupMessage(selectedChannelId, unformattedMessage);
+            const formattedMessage = { messageId: newGroupMessage.id, user: { id: user.id, username: user.username } , text: text.trimEnd(), time: currentTime }
             io.to(userSocket.channelId).emit('message', formattedMessage);
-            addNewGroupMessage(userSocket.channelId, unformattedMessage);
         });
 
         /*Summary: listen if user scrolls to top of message container => load more messages*/
@@ -79,10 +78,11 @@ function initalizeSocketIO(server, sessionMiddleware){
                 return socket.emit('leaveUser', {message: 'you do not have access to this group or channel!'});
             }
 
-            const messages = await getGroupMessagesFormatted(userSocket.channelId, 50, nextMessageId);
+            const messages = await getChannelMessages(selectedChannelId, 50, nextMessageId);
             socket.emit('loadMessages', messages);
         });
 
+        /*Summary: listen if user disconnects */
         socket.on('disconnect', () => {
             userLeave(socket.id);
         })
