@@ -23,6 +23,9 @@
             <button type="submit" class="btn btn-success" id="send-button" style="margin:auto;width:15%">Send</button>
         </form>
     </div>
+
+    {{>modal id="spam-modal" title="Spammer Alert!" text="Say no to toxic behaviour!"}}
+
     <script src="/socket.io/socket.io.js"></script>
     <script src="/public/js/chat.js"></script>
 {{else}}

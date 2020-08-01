@@ -1,27 +1,19 @@
 /*Summary: accept group invitation*/
-function acceptGroupInvitation(id){
-    const xhttp = new XMLHttpRequest();
-    xhttp.open('POST', `/groups/invitations/accept/${id}`);
-    xhttp.onload = function() {
-        if (!(xhttp.status >= 200 && xhttp.status < 400)){
-            $("#invalidInvitation").modal('show');
-        }
-        removeInvitationDiv(id);
+async function acceptGroupInvitation(id){
+    const response = await fetch(`/groups/invitations/accept/${id}`, { method: 'POST' });
+    if (response.status < 200 || response.status >= 400){
+        $("#invalid-invitation").modal('show');
     }
-    xhttp.send();
+    removeInvitationDiv(id);
 }
 
 /*Summary: reject group invitation*/
-function rejectGroupInvitation(id){
-    const xhttp = new XMLHttpRequest();
-    xhttp.open('POST', `/groups/invitations/reject/${id}`);
-    xhttp.onload = function() {
-        if (!(xhttp.status >= 200 && xhttp.status < 400)){
-            $("#invalidInvitation").modal('show');
-        }
-        removeInvitationDiv(id);
+async function rejectGroupInvitation(id){
+    const response = await fetch(`/groups/invitations/reject/${id}`, { method: 'POST' });
+    if (response.status < 200 || response.status >= 400){
+        $("#invalid-invitation").modal('show');
     }
-    xhttp.send();
+    removeInvitationDiv(id);
 }
 
 /*Summary: remove invitation "div" element 

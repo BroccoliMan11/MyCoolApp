@@ -1,25 +1,19 @@
 /*Summary: accept friend request*/
-function acceptFriendRequest(id){
-    const xhttp = new XMLHttpRequest();
-    xhttp.open('POST', `/friends/requests/accept/${id}`);
-    xhttp.onload = function() {
-        if (xhttp.status >= 200 && xhttp.status < 400){
-            removeRequestDiv(id);
-        }
+async function acceptFriendRequest(id){
+    const response = await fetch(`/friends/requests/accept/${id}`, { method: 'POST' });
+    if (response.status < 200 || response.status >= 400){
+        $("#invalid-request").modal('show');
     }
-    xhttp.send();
+    removeRequestDiv(id);
 }
 
 /*Summary: reject friend request*/
-function rejectFriendRequest(id){
-    const xhttp = new XMLHttpRequest();
-    xhttp.open('POST', `/friends/requests/reject/${id}`);
-    xhttp.onload = function() {
-        if (xhttp.status >= 200 && xhttp.status < 400){
-            removeRequestDiv(id);
-        }
+async function rejectFriendRequest(id){
+    const response = await fetch(`/friends/requests/reject/${id}`, { method: 'POST' });
+    if (response.status < 200 || response.status >= 400){
+        $("#invalid-request").modal('show');
     }
-    xhttp.send();
+    removeRequestDiv(id);
 }
 
 /*Summary: remove request "div" element 

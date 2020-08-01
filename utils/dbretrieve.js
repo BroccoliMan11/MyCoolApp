@@ -152,25 +152,37 @@ async function formatMessages(messages){
 Inputs: groupID = ID of target group (STRING)
         currentMessageId = ID of oldest mesage loaded (STRING)
         amountLoading = amount of messages loading (INTEGER)
-Output: messages to be loaded*/
-async function getChannelMessages(channelId, amountLoading, currentMessageId){
-    const messageRef = db.ref(`channels/${channelId}/messageLog`);
-    let messages;
-    if (!currentMessageId){
-        messages = (await messageRef.orderByKey().limitToLast(amountLoading).once('value')).val();
-    }else{
-        messages = (await messageRef.orderByKey().endAt(currentMessageId).limitToLast(amountLoading + 1).once('value')).val();
-        delete messages[currentMessageId];
+Output: messages to be loaded, the new selected message id and whether if all messages are loaded*/
+async function getChannelMessages(channelId, amountLoading, currentMessageId, onenter){
+    const messageLog = db.ref(`channels/${channelId}/messageLog`);
+    const getMessages = async () => {
+        let messages;
+        if (!currentMessageId){
+            messages = (await messageLog.orderByKey().limitToLast(amountLoading).once('value')).val();
+        }else{
+            messages = (await messageLog.orderByKey().endAt(currentMessageId).limitToLast(amountLoading + 1).once('value')).val();
+            delete messages[currentMessageId];
+        }
+        return await formatMessages(messages);
     }
-    const formattedMessages  = await formatMessages(messages);
-    if (formattedMessages.length === 0){
-        return {newMessageId: currentMessageId, messages: [], allMessagesLoaded: true}
+    const getNewMessageId = (formattedMessages) => {
+        return formattedMessages[formattedMessages.length - 1].messageId;
     }
-    const firstLoadedMessageId = formattedMessages[formattedMessages.length - 1].messageId;
-    const firstMessage = (await messageRef.orderByKey().limitToFirst(1).once('value')).val();
-    const firstMessageId = Object.keys(firstMessage)[0]
-    const allMessagesLoaded = (!firstMessage || firstMessageId === firstLoadedMessageId) ? true : false;
-    return { newMessageId: firstLoadedMessageId, messages: formattedMessages, allMessagesLoaded: allMessagesLoaded }
+    const ifAllMessagesLoaded = async (formattedMessages) => {
+        const newMessageId = getNewMessageId(formattedMessages);
+        const firstMessage = (await messageLog.orderByKey().limitToFirst(1).once('value')).val();
+        const firstMessageId = Object.keys(firstMessage)[0]
+        return (!firstMessage || firstMessageId === newMessageId) ? true : false;
+    }
+    const messages = await getMessages();
+    if (onenter && messages.length === 0 || !onenter && !currentMessageId || !onenter && currentMessageId && messages.length === 0){
+        return { newMessageId: undefined, messages: [], allMessagesLoaded: true }
+    }
+    if (onenter && messages.length !== 0 || !onenter && currentMessageId){
+        const allMessagesLoaded = await ifAllMessagesLoaded(messages);
+        const newMessageId = getNewMessageId(messages);
+        return { newMessageId: newMessageId, messages: messages, allMessagesLoaded: allMessagesLoaded }
+    }
 }
 
 module.exports = {

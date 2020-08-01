@@ -13,4 +13,11 @@
         No friend requests
     {{/if}}
 </div>
+
 <script src="/public/js/friendsrequests.js"></script>
+
+{{>modal 
+    id="invalid-request"
+    title="Invalid Friend Request!"
+    text="You cannot accept or reject this friend request since it does not exist anymore! Fat RIP!"
+}}

@@ -5,9 +5,6 @@ const messageForm = document.querySelector("#send-container"); //the whole form 
 const messageInput = document.querySelector("#message-input"); //the actual messgae input textbox (inside "messageForm")
 const loading = document.querySelector("#spinner-box"); //the spinning icon
 
-//message index selected (used to see up to what index messgaes are loaded, this is for loading batches of messages)
-let currentMessageId;
-
 /*Summary: join the channel*/
 const selectedChannelId = window.location.pathname.split('/').pop();
 socket.emit('enterChannel', selectedChannelId)
@@ -22,6 +19,12 @@ socket.on('leaveUser', () => {
     window.location.href = window.location.pathname.split('/').splice(0, 3).join('/');
 });
 
+/*Summary: listen if user was spamming*/
+socket.on('spam', () => {
+    $("#spam-modal").modal('show');
+    messageInput.value = '';
+});
+
 /*Summary: append messages to message container*/
 socket.on('message', message => {
     console.log(message);
@@ -29,9 +32,6 @@ socket.on('message', message => {
     outputMessage(message, true);
     if (isAtBottom){
         messageContainer.scrollTop = messageContainer.scrollHeight;
-    }
-    if (!currentMessageId) {
-        currentMessageId = message.messageId;
     }
 });
 
@@ -44,12 +44,11 @@ socket.on('loadMessages', (messageLog) => {
     const initialScrollHeight = messageContainer.scrollHeight;
     messageLog.messages.forEach(message => outputMessage(message, false));
     const finalScrollHeight = messageContainer.scrollHeight;
-    if (!currentMessageId){
+    if (messageLog.onenter){
         messageContainer.scrollTop = messageContainer.scrollHeight;
     } else {
         messageContainer.scrollTop = finalScrollHeight - initialScrollHeight;
     }
-    currentMessageId = messageLog.newMessageId;
 });
 
 /*Sumary: message input send (textarea entered)*/
@@ -77,7 +76,7 @@ function sendMessage(){
 /*Summary: load extra messages*/
 messageContainer.addEventListener('scroll', () => {
     if (messageContainer.scrollTop === 0){
-        socket.emit('scrolledTop', currentMessageId);
+        socket.emit('scrolledTop');
     }
 })
 
