@@ -6,7 +6,7 @@ const router = express.Router();
 1. logout user (with passport)
 2. destroy session
 3. redirect user to "home" page*/
-router.get('/', (req, res) => {
+router.post('/', (req, res) => {
     req.logout();
     req.session.destroy(() => {
         return res.redirect('/');

@@ -10,12 +10,6 @@ const { acceptFriendRequest, sendFriendReuest, removeFriends, removeFriendReques
 
 const { getFriendsInfoFormatted, getFriendRequestsInfoFormatted, findUserByUsername, findFriendByUsername } = require('../utils/dbretrieve');
 
-
-/*Summary: redirect to "/friends/all" page*/
-router.get('/', authenticationMiddleware(), (req, res) => {
-    return res.redirect('/friends/all');
-});
-
 /*Summary: redirect to first DM channel*/
 router.get('/all', authenticationMiddleware(), (req, res) => {
     if (!req.user.friends) {

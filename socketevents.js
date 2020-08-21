@@ -1,7 +1,7 @@
 const socketio = require('socket.io');
 
 //functions retrieved from other files
-const { userJoin, userLeave, getUserBySocketId} = require('./utils/usersockets');
+const { userJoin, userLeave, getUserBySocketId, getSocketsByUserId} = require('./utils/usersockets');
 const { getUserInfo, getChannelMessages } = require('./utils/dbretrieve');
 const { addNewGroupMessage } = require('./utils/dbmanipulate');
 
@@ -20,8 +20,8 @@ function initalizeSocketIO(server, sessionMiddleware){
     })
 
     io.use((socket, next) => {
-        if (!socket.request.session.passport){
-            socket.emit('noSession');
+        if (!socket.request.session.passport || !socket.request.session.passport.user){
+            return socket.emit('noSession');
         }
         next();
     });
@@ -35,10 +35,6 @@ function initalizeSocketIO(server, sessionMiddleware){
     });
 
     io.on("connection", socket => {
-
-        if (!socket.request.session.passport){
-            socket.emit('noSession');
-        }
 
         const userId = socket.request.session.passport.user; //the user's id
         let selectedChannelId; //the selected channel
