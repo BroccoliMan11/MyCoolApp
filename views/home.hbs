@@ -1,7 +1,28 @@
 {{>navbar page="home"}}
 
+<div class="jumbotron jumbotron-fluid">
+  <div class="container">
+    <h1 class="display-4 header-title">MyCoolApp</h1>
+    <p class="lead header-text">A very cool app for everyone!</p>
+  </div>
+</div>
+
 <div class="container">
-    <h2>Hello There<h2>
-    <h2>Welcome to my shitty app</h2>
-    <h2>Please don't DDOS me lmao</h2>
+    <div class="row">
+        <div class="col-3">
+            <img src="../public/img/ProGamer.png">
+        </div>
+        <div class="col-6" style="word-wrap: break-word;">
+            <p>Hello there! How is it going? Welcome to <span style="color:greenyellow;">MyCoolApp</span>.</p>
+            <p>In this crappy Discord clone, you can add your friends and message with them!</p>
+            <p>Not only that! You can create groups and form your own community</p>
+            {{#unless isAuthenticated}}
+                <p>You can register <a href="/register" style="color:greenyellow;">here.</a></p>
+                <p>Or login <a href="/login" style="color:greenyellow;">here</a> if you already own an account.</p>
+            {{/unless}}
+        </div>
+        <div class="col-3">
+            <img src="../public/img/ProGamer.png">
+        </div>
+    </div>
 </div>

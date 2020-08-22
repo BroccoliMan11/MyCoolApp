@@ -11,13 +11,7 @@ const { createNewChannel, joinGroup, sendGroupInvitation,
     removeGroupInvitation, leaveGroup, deleteGroup, promoteGroupMember } = require('../utils/dbmanipulate');
 
 const { getGroupsInfoFormatted, getGroupInfo, getGroupInvitationsInfoFormatted, 
-    findFriendByUsername, findGroupMemberByUsername} = require('../utils/dbretrieve');
-
-
-/*Summary: redirect to "/groups/all" page */
-router.get('/', authenticationMiddleware(), (req, res) => {
-    return res.redirect('/groups/all')
-});
+    findFriendByUsername, findGroupMemberByUsername, getGroupMembersInfoFormatted} = require('../utils/dbretrieve');
 
 /*Summary: redirect to the first channel in user's group list*/
 router.get('/all', authenticationMiddleware(), async (req, res) => {
@@ -38,8 +32,11 @@ router.get('/all/:groupId',
     async(req, res) => {
 
         const selectedGroupId = req.params.groupId;
-        const groupsInfo = await getGroupsInfoFormatted(req.user.groups)
-        const userGroupRole = (await getGroupInfo(selectedGroupId)).members[req.user.id];
+        const groupsInfo = await getGroupsInfoFormatted(req.user.groups);
+        const selectedGroupInfo = await getGroupInfo(selectedGroupId);
+        const groupMembersInfo = await getGroupMembersInfoFormatted(selectedGroupInfo.members);
+        const userGroupRole = selectedGroupInfo.members[req.user.id];
+
 
         return res.render(
             'groupsall', 
@@ -48,6 +45,7 @@ router.get('/all/:groupId',
                 subpage: 'all', 
                 groupsInfo: groupsInfo,
                 selectedChannelId: selectedGroupId,
+                groupMembersInfo: groupMembersInfo,
                 role: userGroupRole
             }
         );

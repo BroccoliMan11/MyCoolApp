@@ -1,7 +1,7 @@
 {{>navbar page="groups" subpage="all"}}
 
 {{#if groupsInfo}}
-    <div class="column channels-container channels-column list-group">
+    <div class="column channels-container list-group">
         {{#each groupsInfo}}
             <a href="/groups/all/{{this.id}}" class="list-group-item list-group-item-action
             {{#iff ../selectedChannelId '===' this.id}}
@@ -11,7 +11,7 @@
             </a>
         {{/each}}
     </div>
-    <div class="column message-column">
+    <div class="column message-column-groups">
         <div id="message-container" class="message-log">
             <div id="spinner-box" class="text-center spinner-box">
                 <div class="spinner-border spinner-border-sm" role="status">
@@ -31,6 +31,13 @@
                 <a href="/groups/all/{{../selectedChannelId}}/kick" class="btn btn-danger btn-sm" style="margin-left: 10px;height:20%">Kick</a>
             {{/iff}}
         </div>
+    </div>
+    <div class="column members-container list-group">
+        {{#each groupMembersInfo}}
+            <div class="list-group-item list-group-item-action">
+                {{this.id}} {{this.username}}
+            </div>
+        {{/each}}
     </div>
 
     {{>modal id="spam-modal" text="stop spaming"}}

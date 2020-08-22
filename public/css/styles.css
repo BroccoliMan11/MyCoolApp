@@ -35,10 +35,27 @@ body {
     float: left;
 }
 
-.message-column {
-    width: 80%;
+.message-column-friends {
+    width: calc(80% - 2 * 10px);
     height: 100%;
-    padding: 0 10px 0 10px;
+    margin: 0 10px 0 10px;
+    box-sizing: border-box;
+}
+
+.message-column-groups {
+    width: calc(60% - 2 * 10px);
+    height: 100%;
+    margin: 0 10px 0 10px;
+    box-sizing: border-box;
+}
+
+.members-container {
+    width: calc(20% - 10px);
+    height: 475px;
+    overflow-x: hidden;
+    overflow-y: auto;
+    margin-right: 10px;
+    box-sizing: border-box;
 }
 
 .submit-textarea {
@@ -47,18 +64,16 @@ body {
 }
 
 .channels-container {
-    width: 20%;
-    height: 465px;
+    width: calc(20% - 10px);
+    height: 475px;
     overflow-x: hidden;
     overflow-y: auto;
+    margin-left: 10px;
+    box-sizing: border-box;
 }
 
 .navbar {
     background-color: rgb(40, 40, 40);
-}
-
-.channels-column {
-    padding-left: 10px;
 }
 
 .list-group-item {
@@ -96,3 +111,31 @@ body {
     background: greenyellow;
     border-radius: 10px;
   }
+
+.jumbotron {
+    background-color: rgb(0,255,221);
+    background-image: url("../img/MichaelL.png");
+    background-image: url("../img/MichaelL.png"), linear-gradient(90deg, rgba(0,255,221,1) 25%, rgba(70,255,0,1) 67%, rgba(92,195,39,1) 100%);
+}
+
+.header-title {
+    color: greenyellow;
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+    font-weight: 500;
+}
+
+.header-text {
+    color: white;
+    text-shadow: -0.75px -0.75px 0 #000, 0.75px -0.75px 0 #000, -0.75px 0.75px 0 #000, 0.75px 0.75px 0 #000;
+    font-weight: 400;
+}
+
+.home-left-column {
+    background-image: url("../img//ProGamer.png");
+    alt: "progamer";
+}
+
+img {
+    max-width:100%;
+    max-height:100%;
+}

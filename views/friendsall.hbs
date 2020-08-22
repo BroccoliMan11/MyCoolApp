@@ -1,7 +1,7 @@
 {{>navbar page="friends" subpage="all"}}
 
 {{#if friendsInfo}}
-    <div class="column channels-container channels-column list-group">
+    <div class="column channels-container list-group">
         {{#each friendsInfo}}
             <a href="/friends/all/{{this.channelId}}" class="list-group-item list-group-item-action 
             {{#iff ../selectedChannelId '===' this.channelId}}
@@ -11,7 +11,7 @@
             </a>
         {{/each}}
     </div>
-    <div class="column message-column">
+    <div class="column message-column-friends">
         <div id="message-container" class="message-log">
             <div id="spinner-box" class="text-center spinner-box">
                 <div class="spinner-border spinner-border-sm" role="status">

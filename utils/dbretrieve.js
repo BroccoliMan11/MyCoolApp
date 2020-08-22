@@ -87,9 +87,8 @@ async function getGroupInvitationsInfoFormatted (userGroupInvitations) {
 /*Summary: get formatted info of target group's member list
 Input: groupID = ID of targetted group (STRING)
 Output: formatted info of target group's members (ARRAY)*/
-async function getGroupMembersInfoFormatted (groupId) {
-    const groupMemberIds = Object.keys((await db.ref(`channels/${groupId}/members`).once('value')).val());
-    return Promise.all(groupMemberIds.map(async (memberId) => {
+async function getGroupMembersInfoFormatted (groupMembers) {
+    return Promise.all(Object.keys(groupMembers).map(async (memberId) => {
         return await getUserInfo(memberId);
     }));
 }
@@ -192,6 +191,7 @@ module.exports = {
     getGroupsInfoFormatted,
     getFriendRequestsInfoFormatted,
     getGroupInvitationsInfoFormatted,
+    getGroupMembersInfoFormatted,
     findUserByUsername,
     findFriendByUsername,
     findGroupMemberByUsername,
