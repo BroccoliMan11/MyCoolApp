@@ -20,7 +20,7 @@ router.get('/', authenticationMiddleware(), (req, res) => {
 });
 
 router.post("/", authenticationMiddleware(), async (req, res) => {
-    const { username, oldPassword, newPassword, changePassword } = req.body;
+    const { username, oldPassword, newPassword, changePassword, newPasswordConfirm } = req.body;
     const errors = [];
 
     await (async function validateUsername(){
@@ -54,6 +54,13 @@ router.post("/", authenticationMiddleware(), async (req, res) => {
                 return errors.push('New password must include one lowercase character, one uppercase character, a number, and a special character');
             }
         })();
+
+        (function validateNewPasswordConfirmation(){
+            if (!newPasswordConfirm) return errors.push("New password confirmation cannot be empty!");
+            if (typeof newPasswordConfirm !== "string") return errors.push("New password confirmation must be string!");
+            if (newPasswordConfirm.trim() === "") return errors.push("New password confirmation cannot be empty!");
+            if (newPasswordConfirm !== newPassword) return errors.push("Confirmation password must be the same as the new password!");
+        });
     }
 
     if (errors.length > 0){
