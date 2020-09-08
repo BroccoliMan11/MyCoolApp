@@ -1,0 +1,70 @@
+<div class="modal fade" id="promote-modal" tabindex="-1" aria-labelledby="promote-modal-label" aria-hidden="false">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: rgb(80, 80, 80);">
+            <div class="modal-header" style="background-color: red">
+                <h5 class="modal-title" id="promote-modal-label">Promote a Member</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="color:black">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="promote-error-message" class="alert alert-danger" style=";"></div>
+                <div id="promote-success-message" class="alert alert-success"></div>
+                <form id="promote-form">
+                    <div class="form-group">
+                        <label for="groupMemberName">Promoting Member:</label>
+                        <input id="promote-input" type="text" name="groupMemberName" class="form-control" placeholder="Username">       
+                    </div>
+                </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+                    <button id="promote-button" type="submit" form="promote-form" class="btn btn-danger">
+                        <div class="spinner-border spinner-border-sm" id="promote-loading" role="status"></div>
+                        <span>Leave</span>
+                    </button>
+                </div>
+            </div>
+        </div>  
+    </div>
+</div>
+
+<script>
+    $("#promote-error-message").hide();
+    $("#promote-success-message").hide();
+    $("#promote-loading").hide();
+
+    $("#promote-form").on("submit", function (e) {
+        e.preventDefault();
+
+        $("#promote-loading").show();
+        $("#promote-error-message").hide();
+        $("#promote-success-message").hide();
+
+        //i know this is weird but i dont care
+        fetch("/groups/all/{{selectedChannelId}}/leave/leaderselect", 
+        { 
+            method: "POST", 
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                groupMemberName: $("#promote-input").val()
+            })
+        })
+        .then(function(res) {
+            res.json()
+            .then(function(json) {
+                if (json.errorMessage){
+                    $("#promote-error-message").show();
+                    $("#promote-error-message").text(json.errorMessage);
+                }
+                $("#promote-loading").hide();
+            })
+            .catch(function(err) {
+                $("#promote-error-message").show();
+                $("#promote-error-message").text("something went very wrong!");
+                $("#promote-loading").hide();
+            })
+        });
+    });
+</script>

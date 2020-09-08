@@ -21,28 +21,50 @@ router.get('/', (req, res) => {
 3. else => display error messages
 */
 router.post('/', async (req, res) => {
-    const username = req.body.username;
-    const password = req.body.password;
+    const { username, password, passwordMatch } = req.body;
 
-    req.checkBody('username', 'Username must be between 4-15 characters long.').len(4, 15);
-    req.checkBody('password', 'Password must be between 8-100 characters').len(8, 100);
-    req.checkBody('password', 'Password must include one lowercase character, one uppercase character, a number, and a special character')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*]).{8,}$/, "i");
-    req.checkBody('passwordMatch', 'Passwords do not match, please try again.').equals(password);
+    const errors = [];
 
-    const validationErrors = Object.values(req.validationErrors());
-    const userFoundByUsername = await findUserByUsername(username);
-
-    if (userFoundByUsername) {
-        validationErrors.push({ location: 'body', param: 'username', msg: 'Username already exists', value: '' });
+    const validateUsername = async() => {
+        if (!username) return errors.push({ param: "username", msg: "Username cannot be empty!" });
+        if (typeof username !== "string") return errors.push({ param: "username", msg: "Username must be string!" });
+        if (username.length < 4 || username.length > 15) {
+            return errors.push({ param: "username", msg: "Username must be between 4-15 characters!" });
+        }
+        const userFoundByUsername = await findUserByUsername(username);
+        if (userFoundByUsername){
+            return errors.push({ param: "username", msg: "Username already taken!" });
+        }
     }
+    validateUsername();
+
+    const validatePassword = () => {
+        if (!password) return errors.push({ param: "password", msg: "Password cannot be empty!" });
+        if (typeof password !== "string") return errors.push({ param: "password", msg: "Password must be string!" });
+        if (password.length < 8 || password.length > 100){
+            return errors.push({ param: "password", msg: "Password must be between 8-100 characters"});
+        }
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*]).{8,}$/;
+        if (!password.match(passwordRegex)) {
+            return errors.push({ param: "password", msg: "Password must include one lowercase character, one uppercase character, a number, and a special character"});
+        }
+    }
+    validatePassword();
+
+    const validatePasswordMatch = () => {
+        if (!passwordMatch) return errors.push({ param: "passwordMatch", msg: "Password Match cannot be empty!"});
+        if (typeof passwordMatch !== "string") return errors.push({ param: "passwordMatch", msg: "Password Match must be string!" });
+        if (passwordMatch !== password) {
+            return errors.push({ param: "passwordMatch", msg: "Password Match must match with Password!" });
+        }
+    }
+    validatePasswordMatch();
     
-    if (validationErrors.length !== 0){
-        return res.render('register', {page: 'register', errors: validationErrors});
+    if (errors.length !== 0){
+        return res.render('register', { errors });
     }
 
     await bcrypt.hash(password, saltRounds, async (err, hashedPassword) => {
-
         if (err) console.error(err);
         const addingUserData = { username: username, password: hashedPassword };
         const createdUser = await createNewUser(addingUserData);

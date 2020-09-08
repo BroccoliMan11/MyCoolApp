@@ -27,7 +27,7 @@ body {
     border:lightgrey 2px solid;
 }
 
-.spinner-border {
+.spinner-green {
     color:greenyellow;
 }
 
@@ -139,3 +139,13 @@ img {
     max-width:100%;
     max-height:100%;
 }
+
+.modal-content {
+    border: none;
+}
+
+.modal-dialog .modal-content .modal-header span {
+    text-shadow: none;
+}
+
+

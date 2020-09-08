@@ -12,11 +12,12 @@ const { createNewChannel, joinGroup, sendGroupInvitation,
 
 const { getGroupsInfoFormatted, getGroupInfo, getGroupInvitationsInfoFormatted, 
     findFriendByUsername, findGroupMemberByUsername, getGroupMembersInfoFormatted} = require('../utils/dbretrieve');
+const { purgeChannelSockets } = require('../socketevents');
 
 /*Summary: redirect to the first channel in user's group list*/
 router.get('/all', authenticationMiddleware(), async (req, res) => {
     if (!req.user.groups) {
-        return res.render('groupsall', { page: 'groups', subpage: 'all' });
+        return res.render('groupsall');
     }
     const firstChannelId = Object.values(req.user.groups)[0];
     return res.redirect(`/groups/all/${firstChannelId}`);
@@ -37,12 +38,7 @@ router.get('/all/:groupId',
         const groupMembersInfo = await getGroupMembersInfoFormatted(selectedGroupInfo.members);
         const userGroupRole = selectedGroupInfo.members[req.user.id];
 
-
-        return res.render(
-            'groupsall', 
-            { 
-                page: 'groups', 
-                subpage: 'all', 
+        return res.render('groupsall', { 
                 groupsInfo: groupsInfo,
                 selectedChannelId: selectedGroupId,
                 groupMembersInfo: groupMembersInfo,
@@ -52,54 +48,40 @@ router.get('/all/:groupId',
     }
 );
 
-/*Summary: render selected group's "invite" page*/
-router.get('/all/:groupId/invite', 
-
-    authenticationMiddleware(), 
-    noGroups(), 
-    notInGroup(), 
-    
-    (req, res) => {
-        const selectedGroupId = req.params.groupId;
-        return res.render(
-            'groupsinvite', 
-            { 
-                page: 'groups', 
-                subpage: 'all', 
-                selectedChannelId: selectedGroupId 
-            }
-        );
-    }
-);
-
 /*Summary: render "/groups/invitations" page*/
 router.get('/invitations', authenticationMiddleware(), async (req, res) => {
     if (!req.user.groupInvitations){
-        return res.render('groupsinvitations', { page: 'groups', subpage: 'invitations' }); 
+        return res.render('groupsinvitations'); 
     }
     const groupInvitationsInfo = await getGroupInvitationsInfoFormatted(req.user.groupInvitations);
-    return res.render(
-        'groupsinvitations', 
-        { 
-            page: 'groups', 
-            subpage: 'invitations', 
-            inviteGroupsInfo: groupInvitationsInfo 
-        }
-    );
+    return res.render('groupsinvitations', { inviteGroupsInfo: groupInvitationsInfo });
 });
 
 /*Summary: render "/groups/create" page*/
 router.get('/create', authenticationMiddleware(), (req, res) => {
-    return res.render('groupscreate', { page: 'groups', subpage: 'create' });
+    return res.render('groupscreate');
 });
 
 /*Summary: create a new group*/
 router.post('/create', authenticationMiddleware(), async (req, res) => {
-    const groupName = req.body.groupName;
+    const { groupName } = req.body;
+
+    if (!groupName) {
+        return res.render("groupscreate", { errorMessage: "Group Name must not be empty!"});
+    }
+
+    if (typeof groupName !== "string") {
+        return res.render("groupscreate", { errorMessage: "Group Name must be string!"});
+    }
+
+    if (groupName.length > 15) {
+        return res.render("groupscreate", { errorMessage: "Group Name must not exceed 15 characters!"});
+    }
+
     const creatingChannelData = { name: groupName, channelType: 'Group' };
     const createGroup = await createNewChannel(creatingChannelData);
     await joinGroup(req.user.id, createGroup.id, 'leader');
-    return res.render('groupscreate', { page: 'groups', subpage: 'create', successMessage: `${groupName} has been created!`});
+    return res.render('groupscreate', { successMessage: `${groupName} has been created!`});
 });
 
 /*Summary: invite friend to group*/
@@ -110,67 +92,40 @@ router.post('/all/:groupId/invite',
     notInGroup(), 
     
     async (req, res) => {
-        const selectedGroupId = req.params.groupId;
+        const { groupId } = req.params;
         if (!req.user.friends){
-            return res.render(
-                'groupsinvite', 
-                { 
-                    page: 'groups', 
-                    subpage: 'all', 
-                    errorMessage: 'You do not have any friends to invite!', 
-                    selectedChannelId: selectedGroupId
-                }
-            );
+            return res.status(403).json({ errorMessage: 'You do not have any friends to invite!' });
         }
-        const friendUsername = req.body.friendName;
-        const friendFoundByUsername = await findFriendByUsername(req.user.friends, friendUsername);
+
+        const { friendName } = req.body;
+
+        if (!friendName) {
+            return res.status(403).json({ errorMessage: "Username must not be empty!" })
+        }
+    
+        if (typeof friendName !== "string") {
+            return res.status(403).json({ errorMessage: "Username must be string!" });
+        }
+
+        const friendFoundByUsername = await findFriendByUsername(req.user.friends, friendName);
         if (!friendFoundByUsername){
-            return res.render(
-                'groupsinvite', 
-                { 
-                    page: 'groups', 
-                    subpage: 'all', 
-                    errorMessage: `${friendUsername} is not in your friends list!`, 
-                    selectedChannelId: selectedGroupId
-                }
-            );
+            return res.status(403).json({ errorMessage: `${friendName} is not in your friends list!` });
         }
-        const selectedGroup = await getGroupInfo(selectedGroupId);
+
+        const selectedGroup = await getGroupInfo(groupId);
         if (friendFoundByUsername.groupInvitations){
             const friendGroupIds = Object.values(friendFoundByUsername.groupInvitations);
-            if (friendGroupIds.includes(selectedGroupId)){
-                return res.render(
-                    'groupsinvite', 
-                    { 
-                        page: 'groups', 
-                        subpage: 'all', 
-                        errorMessage: `An invitation for ${selectedGroup.name} was already sent to ${friendUsername}!`,
-                        selectedChannelId: selectedGroupId
-                    } 
-                );
+            if (friendGroupIds.includes(groupId)){
+                return res.status(403).json({ errorMessage: `An invitation for ${selectedGroup.name} was already sent to ${friendName}!` });
             }
         }
+
         if (selectedGroup.members[friendFoundByUsername.id]){
-            return res.render(
-                'groupsinvite', 
-                { 
-                    page: 'groups', 
-                    subpage: 'all', 
-                    errorMessage: `${friendUsername} is already in group "${selectedGroup.name}"!`, 
-                    selectedChannelId: selectedGroupId
-                } 
-            );
+            return res.status(403).json({ errorMessage: `${friendName} is already in group "${selectedGroup.name}"!` });
         }
-        sendGroupInvitation(friendFoundByUsername.id, selectedGroupId);
-        return res.render(
-            'groupsinvite', 
-            { 
-                page: 'groups', 
-                subpage: 'all', 
-                successMessage: `${friendUsername} was invited to group ${selectedGroup.name}!`, 
-                selectedChannelId: selectedGroupId 
-            }
-        );
+
+        sendGroupInvitation(friendFoundByUsername.id, groupId);
+        return res.status(200).json({ successMessage: `${friendName} was invited to group ${selectedGroup.name}!` });
     }
 );
 
@@ -182,8 +137,8 @@ router.post('/invitations/accept/:groupId',
     groupIdNotInInvitations(),
     
     async (req, res) => {
-        const selectedGroupId = req.params.groupId;
-        joinGroup(req.user.id, selectedGroupId, 'member');
+        const { groupId } = req.params;
+        joinGroup(req.user.id, groupId, 'member');
         return res.status(200).send('Group was added to group list!');
     }
 );
@@ -195,54 +150,34 @@ router.post('/invitations/reject/:groupId',
     noGroupInvitations(),
     
     async (req, res) => {
-        const selectedGroupId = req.params.groupId;
-        await removeGroupInvitation(req.user.id, selectedGroupId);
+        const { groupId } = req.params;
+        await removeGroupInvitation(req.user.id, groupId);
         return res.status(200).send('Group was rejected');
     }
 );
 
 /*Summary: leave group*/
-/*THIS IS WRONG! THIS SHOULD BE A POST REQUEST!*/
-router.get('/all/:groupId/leave', 
+router.post('/all/:groupId/leave', 
 
     authenticationMiddleware(), 
     noGroups(),
     notInGroup(),
 
     async (req, res) => {
-        const selectedGroupId = req.params.groupId;
-        const selectedGroupMembers = (await getGroupInfo(selectedGroupId)).members
+        const { groupId } = req.params;
+        const selectedGroupMembers = (await getGroupInfo(groupId)).members
         if (selectedGroupMembers[req.user.id] === 'leader'){
             if (Object.entries(selectedGroupMembers).length > 1){
-                return res.redirect(`/groups/all/${selectedGroupId}/leave/leaderselect`);
+                return res.status(200).json({ promoteMember: true });
             } else {
-                await deleteGroup(selectedGroupId);
+                purgeChannelSockets(req.user.id, groupId);
+                await deleteGroup(groupId);
             }
         } else {
-            leaveGroup(req.user.id, selectedGroupId);
+            purgeChannelSockets(req.user.id, groupId);
+            leaveGroup(req.user.id, groupId);
         }
-        return res.redirect('/groups/all');
-    }
-);
-
-/*Summary: render selected group's "/leave/leaderselect" page*/
-router.get('/all/:groupId/leave/leaderselect', 
-
-    authenticationMiddleware(), 
-    noGroups(),
-    notInGroup(),
-    notGroupLeader(),
-    
-    (req, res) => {
-        const selectedGroupId = req.params.groupId;
-        return res.render(
-            'groupsleaveleaderselect', 
-            { 
-                page: 'groups', 
-                subpage: 'all', 
-                selectedChannelId: selectedGroupId 
-            }
-        );
+        return res.status(200).json({ promoteMember: false});
     }
 );
 
@@ -255,55 +190,42 @@ router.post('/all/:groupId/leave/leaderselect',
     notGroupLeader(),
 
     async(req, res) => {
-        const selectedGroupId = req.params.groupId;
-        const groupMemberUserame = req.body.groupMemberName;
-        const promotingMemberFoundByUsername = await findGroupMemberByUsername(selectedGroupId, groupMemberUserame);
+
+        const { groupId } = req.params;
+        const { groupMemberName } = req.body;
+
+        if (!groupMemberName) {
+            return res.status(403).json({ errorMessage: "Group Member Name must not be empty!" });
+        }
+
+        if (typeof groupMemberName !== "string") {
+            return res.status(403).json({ errorMessage: "Group Member Name must be string!" });
+        }
+
+        const groupInfo = await getGroupInfo(groupId);
+
+        if (!groupInfo){
+            return res.status(403).json({ errorMessage: "The group does not exist!" });
+        }
+
+        if (Object.keys(groupInfo.members).length === 1){
+            return res.status(403).json({ errorMessage: "Cannot promote leader when theres no other user in group!"});
+        }
+
+        const promotingMemberFoundByUsername = await findGroupMemberByUsername(groupInfo.members, groupMemberName);
         if (!promotingMemberFoundByUsername){
-            return res.render(
-                'groupsleaveleaderselect', 
-                { 
-                    page: 'groups', 
-                    subpage: 'all', 
-                    selectedChannelId: selectedGroupId,  
-                    errorMessage: `There is no group member with a username of ${groupMemberUserame} in group!`
-                }
-            );
+            return res.status(403).json({ errorMessage: `There is no group member with a username of ${groupMemberName}!` });
         }
+
         if (promotingMemberFoundByUsername.id === req.user.id){
-            return res.render(
-                'groupsleaveleaderselect', 
-                { 
-                    page: 'groups', 
-                    subpage: 'all', 
-                    selectedChannelId: selectedGroupId,  
-                    errorMessage: 'You cannot promote yourself leader when leaving!'
-                }
-            );
+            return res.status(403).json({ errorMessage: 'You cannot promote yourself leader when leaving!' });
         }
-        promoteGroupMember(selectedGroupId, promotingMemberFoundByUsername.id, 'leader');
-        await leaveGroup(req.user.id, selectedGroupId);
-        return res.redirect('/groups/all');
-    }
-);
 
-/*Summary: render selected group's "kick" page*/
-router.get('/all/:groupId/kick', 
-
-    authenticationMiddleware(), 
-    noGroups(),
-    notInGroup(),
-    notGroupLeader(),
-
-    async (req, res) => {
-        const selectedGroupId = req.params.groupId;
-        return res.render(
-            'groupskick', 
-            { 
-                page: 'groups', 
-                subpage: 'all', 
-                selectedChannelId: selectedGroupId 
-            }
-        );
+        promoteGroupMember(groupId, promotingMemberFoundByUsername.id, 'leader');
+        await leaveGroup(req.user.id, groupId);
+        purgeChannelSockets(req.user.id, groupId);
+        
+        return res.status(200).json({ successMessage: 'successfully promoted member and left group!'});
     }
 );
 
@@ -316,55 +238,52 @@ router.post('/all/:groupId/kick',
     notGroupLeader(),
     
     async (req, res) => {
-        const selectedGroupId = req.params.groupId;
-        const groupMemberUsername = req.body.groupMemberName;
-        const kickingMemberFoundByUsername = await findGroupMemberByUsername(selectedGroupId, groupMemberUsername);
+
+        const { groupId } = req.params;
+        const { groupMemberName } = req.body;
+
+        if (!groupMemberName){
+            return res.status(403).json({ errorMessage: "Group Member Name must not be empty!" });
+        }
+
+        if (typeof groupMemberName !== "string") {
+            return res.status(403).json({ errorMessage: "Group Member Name must be string!" });
+        }
+
+        const groupInfo = await getGroupInfo(groupId);
+
+        if (Object.keys(groupInfo.members).length === 1){
+            return res.status(403).json({ errorMessage: "There's no one to kick!"});
+        }
+
+        const kickingMemberFoundByUsername = await findGroupMemberByUsername(groupInfo.members, groupMemberName);
         if (!kickingMemberFoundByUsername){
-            return res.render(
-                'groupskick', 
-                { 
-                    page: 'groups', 
-                    subpage: 'all', 
-                    selectedChannelId: selectedGroupId, 
-                    errorMessage: `${groupMemberUsername} is not in this group!`
-                }
-            );
+            return res.status(403).json({ errorMessage: `${groupMemberName} is not in this group!` });
         }
+
         if (kickingMemberFoundByUsername.id === req.user.id){
-            return res.render(
-                'groupskick', 
-                { 
-                    page: 'groups', 
-                    subpage: 'all', 
-                    selectedChannelId: selectedGroupId, 
-                    errorMessage: `You cannot kick yourself!`
-                }
-            );
+            return res.status(403).json({ errorMessage: `You cannot kick yourself!`});
         }
-        leaveGroup(kickingMemberFoundByUsername.id, selectedGroupId);
 
-        const { userLeave, getSocketsByUserId } = require('../utils/usersockets');
-        const io = require('../socketevents').getSocketIO();
+        leaveGroup(kickingMemberFoundByUsername.id, groupId);
 
-        const leavingUserSockets = getSocketsByUserId(kickingMemberFoundByUsername.id);
+        purgeChannelSockets(kickingMemberFoundByUsername.id, groupId);
 
-        leavingUserSockets.forEach( userSocket => {
-            if (userSocket.channelId === selectedGroupId){
-                io.sockets.connected[userSocket.socketId].emit('leaveUser', { message: 'you have been kicked from the group!' });
-                io.sockets.connected[userSocket.socketId].leave(selectedGroupId);
-                userLeave(userSocket.id);
-            }
-        });
+        // //abstract this
+        // const { userLeave, getSocketsByUserId } = require('../utils/usersockets');
+        // const io = require('../socketevents').getSocketIO();
 
-        res.render(
-            'groupskick', 
-            { 
-                page: 'groups', 
-                subpage: 'all', 
-                selectedChannelId: selectedGroupId, 
-                successMessage: `${groupMemberUsername} was kicked!`
-            }
-        );
+        // const leavingUserSockets = getSocketsByUserId(kickingMemberFoundByUsername.id);
+
+        // leavingUserSockets.forEach( userSocket => {
+        //     if (userSocket.channelId === groupId){
+        //         io.sockets.connected[userSocket.socketId].emit('leaveUser', { message: 'you have been kicked from the group!' });
+        //         io.sockets.connected[userSocket.socketId].leave(groupId);
+        //         userLeave(userSocket.id);
+        //     }
+        // });
+
+        return res.status(200).json({ successMessage: `${groupMemberName} was kicked!` });
     }
 );
 

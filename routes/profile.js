@@ -11,12 +11,7 @@ const { findUserByUsername } = require("../utils/dbretrieve");
 
 /*Summary: render "profile" page with user's details */
 router.get('/', authenticationMiddleware(), (req, res) => {
-    return res.render(
-        'profile',
-        {
-            username: req.user.username,
-        }
-    );
+    return res.render('profile', { username: req.user.username });
 });
 
 router.post("/", authenticationMiddleware(), async (req, res) => {

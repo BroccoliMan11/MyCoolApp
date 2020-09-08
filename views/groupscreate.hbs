@@ -7,6 +7,12 @@
         </div>
     {{/if}}
 
+    {{#if errorMessage}}
+        <div class="alert alert-danger">
+            {{errorMessage}}
+        </div>
+    {{/if}}
+
     <form method="POST" action="/groups/create">
         <div class="form-group">
             <label for="groupName">Group Name</label>

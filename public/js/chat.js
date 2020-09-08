@@ -82,13 +82,41 @@ messageContainer.addEventListener('scroll', () => {
 
 /*Summary: append message to message container*/
 function outputMessage(message, toBottom) {
+
+    //entire message
     const messageElement = document.createElement('div');
-    const messageHolder = document.createElement('p');
+    messageElement.style.padding = "10px";
+
+    //title element
+    const titleDiv = document.createElement('div');
+
+    //name of user
+    const nameSpan = document.createElement("span");
+    nameSpan.style.color = "greenyellow";
+    nameSpan.style.marginRight = "0.25rem";
+    nameSpan.innerText = message.user.username;
+
+    //date 
     const timeOptions = { day: "2-digit", month: "short", year: "numeric", hour: "numeric", minute: "2-digit"}
     const timeString = new Date(message.time).toLocaleTimeString([], timeOptions);
-    messageElement.innerHTML = `<p style="margin:0"><span style="color:greenyellow;margin-right:0.25rem">${message.user.username}</span> <small style="color:lightgrey;margin-left:0.25rem">${timeString}</small></p>`;
+    const dateSmall = document.createElement("small");
+    dateSmall.style.color = "lightgrey";
+    dateSmall.style.marginLeft = "0.25rem";
+    dateSmall.innerText = timeString;
+
+    //add elements to title
+    titleDiv.appendChild(nameSpan);
+    titleDiv.appendChild(dateSmall);
+
+    //add title to message element
+    messageElement.append(titleDiv);
+
+    //actual message
+    const messageHolder = document.createElement("div");
     messageHolder.innerText = message.text;
+
     messageElement.append(messageHolder);
+
     if (toBottom) {
         messageContainer.append(messageElement);
     }else{

@@ -7,7 +7,7 @@ const passport = require('../utils/passport');
 
 /*Summary: render "login" page */
 router.get('/', (req, res,) => {
-    return res.render('login', {page: 'login'});
+    return res.render('login');
 });
 
 /*Summary: login
@@ -17,7 +17,7 @@ router.post('/', (req, res, next) => {
     passport.authenticate('local', (err, user, info) => {
         if (err) console.error(err);
         if (!user) {
-            return res.render('login', {page: 'login', error: 'Username or Password is Incorrect!'});
+            return res.render('login', {error: 'Username or Password is Incorrect!'});
         } 
         req.login(user, err => {
             if (err) console.error(err);

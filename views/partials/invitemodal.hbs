@@ -1,0 +1,75 @@
+<div class="modal fade" id="invite-modal" tabindex="-1" aria-labelledby="invite-modal-label" aria-hidden="false">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: rgb(80, 80, 80);">
+            <div class="modal-header" style="background-color: #218838">
+                <h5 class="modal-title" id="invite-modal-label">Invite a Friend</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="color:black">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="invite-error-message" class="alert alert-danger" style=";"></div>
+                <div id="invite-success-message" class="alert alert-success"></div>
+                <form id="invite-form">
+                    <div class="form-group">
+                        <label for="friendName">Invite Friend:</label>
+                        <input id="invite-input" type="text" name="friendName" class="form-control" placeholder="Username">       
+                    </div>
+                </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-danger" data-dismiss="modal">Close</button>
+                    <button id="invite-button" type="submit" form="invite-form" class="btn btn-success">
+                        <div class="spinner-border spinner-border-sm" id="invite-loading" role="status"></div>
+                        <span>Invite</span>
+                    </button>
+                </div>
+            </div>
+        </div>  
+    </div>
+</div>
+
+<script>
+    $("#invite-error-message").hide();
+    $("#invite-success-message").hide();
+    $("#invite-loading").hide();
+
+    $("#invite-form").on("submit", function (e) {
+        e.preventDefault();
+
+        $("#invite-loading").show();
+        $("#invite-error-message").hide();
+        $("#invite-success-message").hide();
+
+
+        //i know this is weird but i dont care
+        fetch("/groups/all/{{selectedChannelId}}/invite", 
+        { 
+            method: "POST", 
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                friendName: $("#invite-input").val()
+            })
+        })
+        .then(function(res) {
+            res.json()
+            .then(function(json) {
+                if (json.errorMessage){
+                    $("#invite-error-message").show();
+                    $("#invite-error-message").text(json.errorMessage);
+                }
+                if (json.successMessage){
+                    $("#invite-success-message").show();
+                    $("#invite-success-message").text(json.successMessage);
+                }
+                $("#invite-loading").hide();
+            })
+            .catch(function(err) {
+                $("#invite-error-message").show();
+                $("#invite-error-message").text("something went very wrong!");
+                $("#invite-loading").hide();
+            })
+        });
+    });
+</script>

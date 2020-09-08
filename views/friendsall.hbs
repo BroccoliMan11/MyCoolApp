@@ -14,7 +14,7 @@
     <div class="column message-column-friends">
         <div id="message-container" class="message-log">
             <div id="spinner-box" class="text-center spinner-box">
-                <div class="spinner-border spinner-border-sm" role="status">
+                <div class="spinner-border spinner-border-sm spinner-green" role="status">
                     <span class="sr-only">Loading...</span>
                 </div>
                 Loading...
@@ -26,7 +26,11 @@
         </form>
     </div>
 
-    {{>modal id="spam-modal" title="Spammer Alert!" text="Say no to toxic behaviour!"}}
+    {{>errormodal
+        id="spam-modal"
+        title="Spammer Alert!"
+        text="Say no to toxic behaviour!"
+    }}
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="/public/js/chat.js"></script>

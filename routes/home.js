@@ -4,7 +4,7 @@ const router = express.Router();
 
 /*Summary: render "home" page*/
 router.get('/', (req, res) => {
-    return res.render('home', {page: 'home'});
+    return res.render('home');
 });
 
 module.exports = router

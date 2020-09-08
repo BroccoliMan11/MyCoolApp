@@ -31,7 +31,7 @@ function initalizeSocketIO(server, sessionMiddleware){
     const rateLimiter = new RateLimiterMemory({
         points: 1,
         duration: 1,
-        blockDuration: 1
+        blockDuration: 10
     });
 
     io.on("connection", socket => {
@@ -91,10 +91,22 @@ function initalizeSocketIO(server, sessionMiddleware){
             userLeave(socket.id);
         })
     });
+}
 
+function purgeChannelSockets(kickingUserId, groupId){
+    const leavingUserSockets = getSocketsByUserId(kickingUserId);
+    console.log(leavingUserSockets);
+    leavingUserSockets.forEach( userSocket => {
+        if (userSocket.channelId === groupId){
+            io.sockets.connected[userSocket.socketId].emit('leaveUser', { message: "You have been kicked from the group!"});
+            io.sockets.connected[userSocket.socketId].leave(groupId);
+            userLeave(userSocket.id);
+        }
+    });
 }
 
 module.exports = {
+    purgeChannelSockets,
     getSocketIO,
     initalizeSocketIO
 }

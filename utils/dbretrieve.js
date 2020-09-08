@@ -117,10 +117,10 @@ async function findFriendByUsername (userFriends, username) {
 
 /*Summary: search group members if they have a certain username
 Inputs: username = username searching (STRING)
-       groupId = ID of group searching in
+       groupMembers = groupMembers looking through
 Output: info of found user OR undefined (OBJECT)*/
-async function findGroupMemberByUsername (groupId, username) {
-    const allGroupMembers = await getGroupMembersInfoFormatted (groupId);
+async function findGroupMemberByUsername (groupMembers, username) {
+    const allGroupMembers = await getGroupMembersInfoFormatted(groupMembers);
     return allGroupMembers.find((user) => { return user.username === username });
 }
 

@@ -2,7 +2,7 @@ const db = require('../database');
 const { getGroupInfo } = require('./dbretrieve');
 
 /*Sumary: check if user is authenticated*/
-function authenticationMiddleware() {
+exports.authenticationMiddleware = () => {
     return (req, res, next) => {
         if (req.isAuthenticated()) return next();
         return res.redirect('/login');
@@ -10,7 +10,7 @@ function authenticationMiddleware() {
 }
 
 /*Summary: check if user is not in a group*/
-function noGroups(){
+exports.noGroups = () => {
     return (req, res, next) => {
         if (!req.user.groups){
             return res.status(404).send({ error: 'You are in no groups!' });
@@ -20,7 +20,7 @@ function noGroups(){
 }
 
 /*Summary: check if user is not in target group */
-function notInGroup(){
+exports.notInGroup = () => {
     return (req, res, next) => {
         const selectedGroupId = req.params.groupId;
         const userGroupIds = Object.values(req.user.groups);
@@ -34,7 +34,7 @@ function notInGroup(){
 }
 
 /*Summary: check if user is not the leader of target group*/
-function notGroupLeader(){
+exports.notGroupLeader = () => {
     return async (req, res, next) => {
         const selectedGroupId = req.params.groupId;
         const selectedGroupMembers = (await getGroupInfo(selectedGroupId)).members;
@@ -48,7 +48,7 @@ function notGroupLeader(){
 }
 
 /*Summary: check if user has no group invitations*/
-function noGroupInvitations(){
+exports.noGroupInvitations = () => {
     return (req, res, next) => {
         if (!req.user.groupInvitations){
             return res.status(404).send({ error: 'You have no group invitations to accept!' });
@@ -58,7 +58,7 @@ function noGroupInvitations(){
 }
 
 /*Summary: check if target group invited user*/
-function groupIdNotInInvitations() {
+exports.groupIdNotInInvitations = () => {
     return (req, res, next) => {
         const selectedGroupId = req.params.groupId;
         if (!req.user.groupInvitations.includes(selectedGroupId)){
@@ -71,7 +71,7 @@ function groupIdNotInInvitations() {
 }
 
 /*Summary: check if user has no friends*/
-function noFriends() {
+exports.noFriends = () => {
     return (req, res, next) => {
         if (!req.user.friends){
             return res.status(404).send({
@@ -83,7 +83,7 @@ function noFriends() {
 }
 
 /*Summary: check if user is not associated with DM channel*/
-function notInDMChannel() {
+exports.notInDMChannel = () => {
     return (req, res, next) => {
         const selectedChannelId = req.params.channelId;
         const userDMChannelIds = Object.values(req.user.friends);
@@ -97,7 +97,7 @@ function notInDMChannel() {
 }
 
 /*Summary: check if user has no friend requests*/
-function noFriendRequests() {
+exports.noFriendRequests = () => {
     return (req, res, next) => {
         if (!req.user.friendRequests) {
             return res.status(404).send({
@@ -109,7 +109,7 @@ function noFriendRequests() {
 }
 
 /*Summary check if user ID is not in user's friend request list*/
-function idNotInFriendRequests(){
+exports.idNotInFriendRequests = () => {
     return (req, res, next) => {
         const friendId = req.params.friendId;
         if (!req.user.friendRequests.includes(friendId)) {
@@ -119,17 +119,4 @@ function idNotInFriendRequests(){
         } 
         next();
     }
-}
-
-module.exports = {
-    authenticationMiddleware,
-    noGroupInvitations,
-    groupIdNotInInvitations,
-    noGroups,
-    notInGroup,
-    notGroupLeader,
-    noFriends,
-    notInDMChannel,
-    noFriendRequests,
-    idNotInFriendRequests
 }

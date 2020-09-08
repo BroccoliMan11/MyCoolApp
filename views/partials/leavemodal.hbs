@@ -1,0 +1,45 @@
+<div class="modal fade" id="leave-modal" tabindex="-1" role="dialog" aria-labelledby="leave-modal-label" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content" style="background-color: rgb(80, 80, 80);">
+      <div class="modal-header" style="background-color:red;">
+        <h5 class="modal-title" id="leave-modal-label">Are you sure?</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true" style="color:black;">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        Are you EXTREMELY sure that you want to leave?
+      </div>
+      <div class="modal-footer" style="border:none;">
+        <button type="button" class="btn btn-success" data-dismiss="modal">No</button>
+        <button id="leave-button" type="button" class="btn btn-danger">
+            <div class="spinner-border spinner-border-sm" id="leave-loading" role="status"></div>
+            <span>Yes</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+    $("#leave-loading").hide();
+    $("#leave-button").on("click", function(e) {
+        //dodgy javascript templating here as well
+        fetch("/groups/all/{{selectedChannelId}}/leave", { method: "POST" })
+        .then(function(res) {
+            $("#leave-loading").show();
+            res.json()
+            .then(function(json) {
+                if (json.promoteMember) {
+                    $("#leave-loading").hide();
+                    $("#leave-modal").modal("hide");
+                    $("#promote-modal").modal("show");
+                }
+            })
+        })
+        .catch(function(err) {
+            $("#leave-loading").hide();
+            console.error(err);
+        })
+    });
+</script>

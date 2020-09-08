@@ -1,0 +1,74 @@
+<div class="modal fade" id="kick-modal" tabindex="-1" aria-labelledby="kick-modal-label" aria-hidden="false">
+    <div class="modal-dialog">
+        <div class="modal-content" style="background-color: rgb(80, 80, 80);">
+            <div class="modal-header" style="background-color: red">
+                <h5 class="modal-title" id="kick-modal-label">Kick a Member!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true" style="color:black">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="kick-error-message" class="alert alert-danger" style=";"></div>
+                <div id="kick-success-message" class="alert alert-success"></div>
+                <form id="kick-form">
+                    <div class="form-group">
+                        <label for="groupMemberName">Kicking Member:</label>
+                        <input id="kick-input" type="text" name="groupMemberName" class="form-control" placeholder="Username">       
+                    </div>
+                </form>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-success" data-dismiss="modal">Close</button>
+                    <button id="kick-button" type="submit" form="kick-form" class="btn btn-danger">
+                        <div class="spinner-border spinner-border-sm" id="kick-loading" role="status"></div>
+                        <span>Kick</span>
+                    </button>
+                </div>
+            </div>
+        </div>  
+    </div>
+</div>
+
+<script>
+    $("#kick-error-message").hide();
+    $("#kick-success-message").hide();
+    $("#kick-loading").hide();
+
+    $("#kick-form").on("submit", function (e) {
+        e.preventDefault();
+
+        $("#kick-loading").show();
+        $("#kick-error-message").hide();
+        $("#kick-success-message").hide();
+
+        //i know this is weird but i dont care
+        fetch("/groups/all/{{selectedChannelId}}/kick", 
+        { 
+            method: "POST", 
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                groupMemberName: $("#kick-input").val()
+            })
+        })
+        .then(function(res) {
+            res.json()
+            .then(function(json) {
+                if (json.errorMessage){
+                    $("#kick-error-message").show();
+                    $("#kick-error-message").text(json.errorMessage);
+                }
+                if (json.successMessage){
+                    $("#kick-success-message").show();
+                    $("#kick-success-message").text(json.successMessage);
+                }
+                $("#kick-loading").hide();
+            })
+            .catch(function(err) {
+                $("#kick-error-message").show();
+                $("#kick-error-message").text("something went very wrong!");
+                $("#kick-loading").hide();
+            })
+        });
+    });
+</script>
