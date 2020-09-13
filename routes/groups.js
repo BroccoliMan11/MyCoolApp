@@ -74,8 +74,8 @@ router.post('/create', authenticationMiddleware(), async (req, res) => {
         return res.render("groupscreate", { errorMessage: "Group Name must be string!"});
     }
 
-    if (groupName.length > 15) {
-        return res.render("groupscreate", { errorMessage: "Group Name must not exceed 15 characters!"});
+    if (groupName.length > 15 || groupName.length < 4) {
+        return res.render("groupscreate", { errorMessage: "Group Name must be between 3-15 characters!"});
     }
 
     const creatingChannelData = { name: groupName, channelType: 'Group' };
@@ -224,7 +224,7 @@ router.post('/all/:groupId/leave/leaderselect',
         promoteGroupMember(groupId, promotingMemberFoundByUsername.id, 'leader');
         await leaveGroup(req.user.id, groupId);
         purgeChannelSockets(req.user.id, groupId);
-        
+
         return res.status(200).json({ successMessage: 'successfully promoted member and left group!'});
     }
 );
