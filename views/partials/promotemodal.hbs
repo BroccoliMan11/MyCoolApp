@@ -1,3 +1,5 @@
+{{!-- the form to promote a member to leader before the leader leaves --}}
+
 <div class="modal fade" id="promote-modal" tabindex="-1" aria-labelledby="promote-modal-label" aria-hidden="false">
     <div class="modal-dialog">
         <div class="modal-content" style="background-color: rgb(80, 80, 80);">
@@ -37,11 +39,14 @@
         e.preventDefault();
 
         $("#promote-loading").show();
+        $("#promote-button").attr("disabled", true);
+
         $("#promote-error-message").hide();
         $("#promote-success-message").hide();
+       
 
         //i know this is weird but i dont care
-        fetch("/groups/all/{{selectedChannelId}}/leave/leaderselect", 
+        fetch(`/groups/all/{{selectedChannelId}}/leave/leaderselect`, 
         { 
             method: "POST", 
             headers: {
@@ -59,11 +64,14 @@
                     $("#promote-error-message").text(json.errorMessage);
                 }
                 $("#promote-loading").hide();
+                $("#promote-button").removeAttr("disabled");
             })
             .catch(function(err) {
                 $("#promote-error-message").show();
                 $("#promote-error-message").text("something went very wrong!");
+
                 $("#promote-loading").hide();
+                $("#promote-button").removeAttr("disabled");
             })
         });
     });

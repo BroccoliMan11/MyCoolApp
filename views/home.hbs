@@ -1,4 +1,36 @@
+{{!-- the home page --}}
+
 {{>navbar page="home"}}
+
+<style>
+    .jumbotron {
+        background-color: rgb(0,255,221);
+        background-image: url("../public/img/MichaelL.png");
+        background-image: url("../public/img/MichaelL.png"), linear-gradient(90deg, rgba(0,255,221,1) 25%, rgba(70,255,0,1) 67%, rgba(92,195,39,1) 100%);
+    }
+
+    .header-title {
+        color: greenyellow;
+        text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
+        font-weight: 500;
+    }
+
+    .header-text {
+        color: white;
+        text-shadow: -0.75px -0.75px 0 #000, 0.75px -0.75px 0 #000, -0.75px 0.75px 0 #000, 0.75px 0.75px 0 #000;
+        font-weight: 400;
+    }
+
+    .home-left-column {
+        background-image: url("../img//ProGamer.png");
+        alt: "progamer";
+    }
+
+    img {
+        max-width:100%;
+        max-height:100%;
+    }
+</style>
 
 <div class="jumbotron jumbotron-fluid">
   <div class="container">
@@ -14,8 +46,9 @@
         </div>
         <div class="col-6" style="word-wrap: break-word;">
             <p>Hello there! How is it going? Welcome to <span style="color:greenyellow;">MyCoolApp</span>.</p>
-            <p>In this crappy Discord clone, you can add your friends and message with them!</p>
-            <p>Not only that! You can create groups and form your own community</p>
+            <p>In this crappy Discord clone, you can exchange messages with friends or other members in a group!</p>
+            <p>Don't miss out on all the fun!</p>
+            <small>Since it works at school as well... :D</small>
             {{#unless isAuthenticated}}
                 <p>You can register <a href="/register" style="color:greenyellow;">here.</a></p>
                 <p>Or login <a href="/login" style="color:greenyellow;">here</a> if you already own an account.</p>

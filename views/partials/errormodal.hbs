@@ -1,16 +1,33 @@
+{{!-- the modal used for spam messages or attempting to accept a friend request or group invitation that doesn't exist --}}
+
+<style>
+  .modal-header {
+    background-color:red;
+  }
+  .modal-content {
+    background-color: rgb(80, 80, 80);
+  }
+  .close span {
+    color: black;
+  }
+  .modal-footer {
+    border: none;
+  }
+</style>
+
 <div class="modal fade" id={{id}} tabindex="-1" role="dialog" aria-labelledby="{{id}}-label" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
-    <div class="modal-content" style="background-color: rgb(80, 80, 80);">
-      <div class="modal-header" style="background-color:red;">
+    <div class="modal-content">
+      <div class="modal-header">
         <h5 class="modal-title" id="{{id}}-label">{{title}}</h5>
         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true" style="color:black;">&times;</span>
+          <span aria-hidden="true">&times;</span>
         </button>
       </div>
       <div class="modal-body">
         {{text}}
       </div>
-      <div class="modal-footer" style="border:none;">
+      <div class="modal-footer">
         <button type="button" class="btn btn-success" data-dismiss="modal">Ok</button>
       </div>
     </div>

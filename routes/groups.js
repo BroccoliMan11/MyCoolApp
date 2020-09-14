@@ -12,7 +12,7 @@ const { createNewChannel, joinGroup, sendGroupInvitation,
 
 const { getGroupsInfoFormatted, getGroupInfo, getGroupInvitationsInfoFormatted, 
     findFriendByUsername, findGroupMemberByUsername, getGroupMembersInfoFormatted} = require('../utils/dbretrieve');
-const { purgeChannelSockets } = require('../socketevents');
+const { purgeChannelSockets, sendAdminMessage, removeFromMemberList, addToMemberList, updateFooterForLeader } = require('../socketevents');
 
 /*Summary: redirect to the first channel in user's group list*/
 router.get('/all', authenticationMiddleware(), async (req, res) => {
@@ -39,7 +39,7 @@ router.get('/all/:groupId',
         const userGroupRole = selectedGroupInfo.members[req.user.id];
 
         return res.render('groupsall', { 
-                groupsInfo: groupsInfo,
+                channelInfo: groupsInfo,
                 selectedChannelId: selectedGroupId,
                 groupMembersInfo: groupMembersInfo,
                 role: userGroupRole
@@ -54,7 +54,7 @@ router.get('/invitations', authenticationMiddleware(), async (req, res) => {
         return res.render('groupsinvitations'); 
     }
     const groupInvitationsInfo = await getGroupInvitationsInfoFormatted(req.user.groupInvitations);
-    return res.render('groupsinvitations', { inviteGroupsInfo: groupInvitationsInfo });
+    return res.render('groupsinvitations', { requestInfo: groupInvitationsInfo });
 });
 
 /*Summary: render "/groups/create" page*/
@@ -81,6 +81,7 @@ router.post('/create', authenticationMiddleware(), async (req, res) => {
     const creatingChannelData = { name: groupName, channelType: 'Group' };
     const createGroup = await createNewChannel(creatingChannelData);
     await joinGroup(req.user.id, createGroup.id, 'leader');
+    await sendAdminMessage(createGroup.id, "createdGroup", req.user.username);
     return res.render('groupscreate', { successMessage: `${groupName} has been created!`});
 });
 
@@ -124,7 +125,7 @@ router.post('/all/:groupId/invite',
             return res.status(403).json({ errorMessage: `${friendName} is already in group "${selectedGroup.name}"!` });
         }
 
-        sendGroupInvitation(friendFoundByUsername.id, groupId);
+        await sendGroupInvitation(friendFoundByUsername.id, groupId);
         return res.status(200).json({ successMessage: `${friendName} was invited to group ${selectedGroup.name}!` });
     }
 );
@@ -138,7 +139,9 @@ router.post('/invitations/accept/:groupId',
     
     async (req, res) => {
         const { groupId } = req.params;
-        joinGroup(req.user.id, groupId, 'member');
+        await joinGroup(req.user.id, groupId, 'member');
+        await sendAdminMessage(groupId, "join", req.user.username);
+        await addToMemberList(groupId, { id: req.user.id, username: req.user.username });
         return res.status(200).send('Group was added to group list!');
     }
 );
@@ -170,12 +173,15 @@ router.post('/all/:groupId/leave',
             if (Object.entries(selectedGroupMembers).length > 1){
                 return res.status(200).json({ promoteMember: true });
             } else {
-                purgeChannelSockets(req.user.id, groupId);
+                await purgeChannelSockets(req.user.id, groupId);
                 await deleteGroup(groupId);
             }
         } else {
-            purgeChannelSockets(req.user.id, groupId);
-            leaveGroup(req.user.id, groupId);
+            await purgeChannelSockets(req.user.id, groupId);
+            await leaveGroup(req.user.id, groupId);
+
+            await sendAdminMessage(groupId, "leave", req.user.username)
+            await removeFromMemberList(groupId, req.user.id);
         }
         return res.status(200).json({ promoteMember: false});
     }
@@ -221,9 +227,14 @@ router.post('/all/:groupId/leave/leaderselect',
             return res.status(403).json({ errorMessage: 'You cannot promote yourself leader when leaving!' });
         }
 
-        promoteGroupMember(groupId, promotingMemberFoundByUsername.id, 'leader');
+        await promoteGroupMember(groupId, promotingMemberFoundByUsername.id, 'leader');
         await leaveGroup(req.user.id, groupId);
-        purgeChannelSockets(req.user.id, groupId);
+        await purgeChannelSockets(req.user.id, groupId);
+
+        await sendAdminMessage(groupId, "promote", promotingMemberFoundByUsername.username);
+        await sendAdminMessage(groupId, "leave", req.user.username);
+        await removeFromMemberList(groupId, req.user.id);
+        await updateFooterForLeader(groupId, promotingMemberFoundByUsername.id);
 
         return res.status(200).json({ successMessage: 'successfully promoted member and left group!'});
     }
@@ -265,23 +276,11 @@ router.post('/all/:groupId/kick',
             return res.status(403).json({ errorMessage: `You cannot kick yourself!`});
         }
 
-        leaveGroup(kickingMemberFoundByUsername.id, groupId);
+        await leaveGroup(kickingMemberFoundByUsername.id, groupId);
+        await purgeChannelSockets(kickingMemberFoundByUsername.id, groupId);
 
-        purgeChannelSockets(kickingMemberFoundByUsername.id, groupId);
-
-        // //abstract this
-        // const { userLeave, getSocketsByUserId } = require('../utils/usersockets');
-        // const io = require('../socketevents').getSocketIO();
-
-        // const leavingUserSockets = getSocketsByUserId(kickingMemberFoundByUsername.id);
-
-        // leavingUserSockets.forEach( userSocket => {
-        //     if (userSocket.channelId === groupId){
-        //         io.sockets.connected[userSocket.socketId].emit('leaveUser', { message: 'you have been kicked from the group!' });
-        //         io.sockets.connected[userSocket.socketId].leave(groupId);
-        //         userLeave(userSocket.id);
-        //     }
-        // });
+        await sendAdminMessage(groupId, "kick", kickingMemberFoundByUsername.username);
+        await removeFromMemberList(groupId, kickingMemberFoundByUsername.id);
 
         return res.status(200).json({ successMessage: `${groupMemberName} was kicked!` });
     }

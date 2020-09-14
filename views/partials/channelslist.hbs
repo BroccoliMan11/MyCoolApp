@@ -1,0 +1,25 @@
+{{!-- component for showing all the channels --}}
+
+<style>
+    .channels-container {
+        width: calc(20% - 10px);
+        height: 475px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        margin-left: 10px;
+        box-sizing: border-box;
+    }
+</style>
+
+<div class="column channels-container list-group">
+    <div class="column-title">{{title}}</div>
+    {{#each channelInfo}}
+        <a 
+            href="/{{../endPoint}}/all/{{#if this.channelId}}{{this.channelId}}{{else}}{{this.id}}{{/if}}" 
+            channel_id="{{#if this.channelId}}{{this.channelId}}{{else}}{{this.id}}{{/if}}" 
+            class="list-group-item list-group-item-action {{#iff ../selectedChannelId '===' this.channelId}}active{{/iff}}{{#iff ../selectedChannelId '===' this.id}}active{{/iff}}"
+        >
+            {{#if this.username}}{{this.username}}{{else}}{{this.name}}{{/if}}
+        </a>
+    {{/each}}
+</div>

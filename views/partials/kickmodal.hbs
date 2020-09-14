@@ -1,10 +1,24 @@
+{{!-- form to kick a member from the group --}}
+
+<style>
+    .modal-content {
+        background-color: rgb(80, 80, 80);
+    }
+    .modal-header {
+        background-color: red
+    }
+    .close span {
+        color:black
+    }
+</style>
+
 <div class="modal fade" id="kick-modal" tabindex="-1" aria-labelledby="kick-modal-label" aria-hidden="false">
     <div class="modal-dialog">
-        <div class="modal-content" style="background-color: rgb(80, 80, 80);">
-            <div class="modal-header" style="background-color: red">
+        <div class="modal-content">
+            <div class="modal-header">
                 <h5 class="modal-title" id="kick-modal-label">Kick a Member!</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true" style="color:black">&times;</span>
+                    <span aria-hidden="true">&times;</span>
                 </button>
             </div>
             <div class="modal-body">
@@ -37,11 +51,13 @@
         e.preventDefault();
 
         $("#kick-loading").show();
+        $("#kick-button").attr("disabled", true);
+
         $("#kick-error-message").hide();
         $("#kick-success-message").hide();
 
         //i know this is weird but i dont care
-        fetch("/groups/all/{{selectedChannelId}}/kick", 
+        fetch(`/groups/all/{{selectedChannelId}}/kick`, 
         { 
             method: "POST", 
             headers: {
@@ -63,11 +79,16 @@
                     $("#kick-success-message").text(json.successMessage);
                 }
                 $("#kick-loading").hide();
+                $("#kick-button").removeAttr("disabled");
+
             })
             .catch(function(err) {
                 $("#kick-error-message").show();
                 $("#kick-error-message").text("something went very wrong!");
+
                 $("#kick-loading").hide();
+                $("#kick-button").removeAttr("disabled");
+
             })
         });
     });

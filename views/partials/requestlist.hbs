@@ -1,0 +1,28 @@
+<style>
+    .requests {
+        height: 460px;
+        overflow: hidden auto"
+    }
+</style>
+
+
+<div class="container">
+    {{#if requestInfo}}
+        <ul class="list-group requests requests-container">
+            {{#each requestInfo}}
+                <li class="list-group-item" request_id="{{this.id}}">
+                    <p>{{#iff ../type '===' 'friends' }}{{../this.username}}{{/iff}}{{#iff ../type '===' 'groups'}}{{../this.name}}{{/iff}}</p>
+                    <button type="button" class="btn btn-success" onclick='{{#iff ../type '===' 'friends' }}acceptFriendRequest("{{../this.id}}"){{/iff}}{{#iff ../type '===' 'groups'}}acceptGroupInvitation("{{../this.id}}"){{/iff}}'>Accept</button>
+                    <button type="button" class="btn btn-danger" onclick={{#iff ../type '===' 'friends' }}'rejectFriendRequest("{{../this.id}}")'{{/iff}}{{#iff ../type '===' 'groups'}}'rejectGroupInvitation("{{../this.id}}")'{{/iff}}>Reject</button>
+                </li>
+            {{/each}}
+        </ul>
+    {{else}}
+        {{#iff type '===' 'friends' }}
+            No friend requests
+        {{/iff}}
+        {{#iff type '===' 'groups'}}
+            No group invitations
+        {{/iff}}
+    {{/if}}
+</div>

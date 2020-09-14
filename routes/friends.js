@@ -9,7 +9,7 @@ const { authenticationMiddleware, noFriends, notInDMChannel, idNotInFriendReques
 const { acceptFriendRequest, sendFriendReuest, removeFriends, removeFriendRequest } = require('../utils/dbmanipulate');
 
 const { getFriendsInfoFormatted, getFriendRequestsInfoFormatted, findUserByUsername, findFriendByUsername } = require('../utils/dbretrieve');
-const { purgeChannelSockets } = require('../socketevents');
+const { purgeChannelSockets, sendAdminMessage } = require('../socketevents');
 
 /*Summary: redirect to first DM channel*/
 router.get('/all', authenticationMiddleware(), (req, res) => {
@@ -30,7 +30,7 @@ router.get('/all/:channelId',
     async (req, res) => {
         const selectedChannelId = req.params.channelId;
         const friendsInfo = await getFriendsInfoFormatted(req.user.friends);
-        return res.render('friendsall', { friendsInfo: friendsInfo, selectedChannelId: selectedChannelId });
+        return res.render('friendsall', { channelInfo: friendsInfo, selectedChannelId: selectedChannelId });
     }
 );
 
@@ -40,7 +40,7 @@ router.get('/requests', authenticationMiddleware(), async (req, res) => {
         return res.render( 'friendsrequests');
     } 
     const friendRequestInfo = await getFriendRequestsInfoFormatted(req.user.friendRequests)
-    return res.render( 'friendsrequests', { requestFriendsInfo: friendRequestInfo });
+    return res.render( 'friendsrequests', { requestInfo: friendRequestInfo });
 })
 
 /*Summary render "add" page*/
@@ -62,7 +62,9 @@ router.post('/requests/accept/:friendId',
 
     async (req, res) => { 
         const friendId = req.params.friendId;
-        await acceptFriendRequest(req.user.id, friendId);
+        const channel = await acceptFriendRequest(req.user.id, friendId);
+        console.log(channel);
+        await sendAdminMessage(channel.id, "createdDM");
         return res.status(200).send('user added to friend list!');
     }
 );
@@ -75,7 +77,7 @@ router.post('/requests/reject/:friendId',
 
     async (req, res) => {
         const friendId = req.params.friendId;
-        /*await*/ removeFriendRequest(req.user.id, friendId);
+        await removeFriendRequest(req.user.id, friendId);
         return res.status(200).send('user was rejected');
     }
 );
@@ -113,7 +115,7 @@ router.post('/add', authenticationMiddleware(), async (req, res) => {
         return res.render('friendsadd', { errorMessage: `You already sent a friend request to user "${friendName}"!` });
     }
 
-    sendFriendReuest(userFoundByUsername.id, req.user.id);
+    await sendFriendReuest(userFoundByUsername.id, req.user.id);
     return res.render('friendsadd', { successMessage: `Your friend request was sent to "${friendName}"!` });
 });
 
@@ -139,9 +141,9 @@ router.post('/remove', authenticationMiddleware(), async(req, res) => {
         return res.render( 'friendsremove', { errorMessage: `User ${friendName} is not in your friends list!` });
     }
 
-    removeFriends(req.user.id, friendFoundByUsername.id, friendFoundByUsername.channelId);
+    await removeFriends(req.user.id, friendFoundByUsername.id, friendFoundByUsername.channelId);
 
-    purgeChannelSockets(friendFoundByUsername.id, friendFoundByUsername.channelId);
+    await purgeChannelSockets(friendFoundByUsername.id, friendFoundByUsername.channelId);
 
     return res.render('friendsremove', { successMessage: `User ${friendName} was removed from your friends list!` });
 });

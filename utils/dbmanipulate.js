@@ -7,7 +7,7 @@ const { getGroupInfo } = require('./dbretrieve');
 Input: addingUserData = new user's details (OBJECT)
 Output: new user's detail, including new ID (OBJECT)*/
 async function createNewUser(addingUserData){
-    const addedUserId =  db.ref('users').push(addingUserData).key;
+    const addedUserId = db.ref('users').push(addingUserData).key;
     return {...addingUserData, id: addedUserId };
 }
 
@@ -16,9 +16,10 @@ Inputs: recieverId = ID of user who recieved the friend request (STRING)
         senderId = ID of user who sent the friend request (STRING)*/
 async function acceptFriendRequest(recieverId, senderId) {
     const createChannelId = (await createNewChannel({ channelType: "DM" })).id;
-    db.ref(`users/${recieverId}/friends/${senderId}`).set(createChannelId);
-    db.ref(`users/${senderId}/friends/${recieverId}`).set(createChannelId);
-    removeFriendRequest(recieverId, senderId);
+    await db.ref(`users/${recieverId}/friends/${senderId}`).set(createChannelId);
+    await db.ref(`users/${senderId}/friends/${recieverId}`).set(createChannelId);
+    await removeFriendRequest(recieverId, senderId);
+    return { id: createChannelId };
 }
 
 /*Summary: creates new channel
@@ -34,17 +35,17 @@ Inputs: addingUserId = ID of adding user (STRING)
         groupId = ID of group the user is joining (STRING)
         role = user's new role in the group (STRING)*/
 async function joinGroup(addingUserId, groupId, role){
-    db.ref(`channels/${groupId}/members/${addingUserId}`).set(role);
-    db.ref(`users/${addingUserId}/groups/${groupId}`).set(true);
-    removeGroupInvitation(addingUserId, groupId);
+    await db.ref(`channels/${groupId}/members/${addingUserId}`).set(role);
+    await db.ref(`users/${addingUserId}/groups/${groupId}`).set(true);
+    await removeGroupInvitation(addingUserId, groupId);
 }
 
 /*Summary: remove user from group
 Inputs: leavingId = ID of user leaving (SRING)
         groupId = ID of group (STRING)*/
 async function leaveGroup(leavingUserId, groupId){
-    db.ref(`channels/${groupId}/members/${leavingUserId}`).remove();
-    db.ref(`users/${leavingUserId}/groups/${groupId}`).remove();
+    await db.ref(`channels/${groupId}/members/${leavingUserId}`).remove();
+    await db.ref(`users/${leavingUserId}/groups/${groupId}`).remove();
 }
 
 /*Summary: delete group
@@ -54,13 +55,13 @@ async function deleteGroup(groupId){
     const allGroupMemberIds = Object.keys(groupInfo.members);
     if (groupInfo.usersInvited){
         for (userId of groupInfo.usersInvited){
-            db.ref(`users/${userId}/groupInvitations/${groupId}`).remove();
+            await db.ref(`users/${userId}/groupInvitations/${groupId}`).remove();
         }
     }
     for (memberId of allGroupMemberIds){
-        leaveGroup(memberId, groupId);
+        await leaveGroup(memberId, groupId);
     }
-    removeChannel(groupId);
+    await removeChannel(groupId);
 }
 
 /*Summary: change member's role in database
@@ -68,28 +69,28 @@ Inputs: groupId = ID of group (STRING)
         promotingId = ID of user promoting (STRING)
         role = user's new role (STRING)*/
 async function promoteGroupMember(groupId, promotingId, newRole){
-    db.ref(`channels/${groupId}/members/${promotingId}`).set(newRole);
+    await db.ref(`channels/${groupId}/members/${promotingId}`).set(newRole);
 }
 
 /*Summary: remove user's group invitation in database
 Inputs: userId = ID of user removing invitation from (STRING)
         removingGroupId = group ID removing from invitations (STRING)*/
 async function removeGroupInvitation(userId, removingGroupId){
-    db.ref(`users/${userId}/groupInvitations/${removingGroupId}`).remove();
-    db.ref(`channels/${removingGroupId}/usersInvited/${userId}`).remove();
+    await db.ref(`users/${userId}/groupInvitations/${removingGroupId}`).remove();
+    await db.ref(`channels/${removingGroupId}/usersInvited/${userId}`).remove();
 }
 
 /*Summary: remove channel from database
 Inputs: removingChannelId = ID of channel removing (STRING)*/
 async function removeChannel(removingChannelId){
-    db.ref(`channels/${removingChannelId}`).remove();
+    await db.ref(`channels/${removingChannelId}`).remove();
 }
 
 /*Summary: remove user's friend request in database
 Inputs: recieverId = ID of user who recieved the request (STRING)
         senderId = ID of user who sent the request (STRING)*/
 async function removeFriendRequest(recieverId, senderId) {
-    db.ref(`users/${recieverId}/friendRequests/${senderId}`).remove();
+    await db.ref(`users/${recieverId}/friendRequests/${senderId}`).remove();
 }
 
 /*Summary: send friend request by adding to target user's friend requests in database
@@ -97,7 +98,7 @@ Inputs: recieverId = ID of user who will recieve request (STRING)
         senderId = ID of user sending the request (STRING)
  */
 async function sendFriendReuest(recieverId, senderId){
-    db.ref(`users/${recieverId}/friendRequests/${senderId}`).set(true);
+    await db.ref(`users/${recieverId}/friendRequests/${senderId}`).set(true);
 }
 
 /*Summary: send group invitation by adding to target user's group invitations in database
@@ -105,8 +106,8 @@ Inputs: recieverId = ID of user who will recieve the invitation (STRING)
         gropuId = ID of group sending the invitation
  */
 async function sendGroupInvitation(recieverId, groupId){
-    db.ref(`users/${recieverId}/groupInvitations/${groupId}`).set(true);
-    db.ref(`channels/${groupId}/usersInvited/${recieverId}`).set(true);
+    await db.ref(`users/${recieverId}/groupInvitations/${groupId}`).set(true);
+    await db.ref(`channels/${groupId}/usersInvited/${recieverId}`).set(true);
 }
 
 /*Summary remove user pair as friends
@@ -114,9 +115,9 @@ Inputs: userId = ID of first user (STRING)
         friendId = ID of second user (STRING)
         channelId = ID of both user's DM channel (STRING)*/
 async function removeFriends(userId, friendId, channelId){
-    db.ref(`users/${userId}/friends/${friendId}`).remove();
-    db.ref(`users/${friendId}/friends/${userId}`).remove();
-    removeChannel(channelId);
+    await db.ref(`users/${userId}/friends/${friendId}`).remove();
+    await db.ref(`users/${friendId}/friends/${userId}`).remove();
+    await removeChannel(channelId);
 }
 
 /*Summary append new message to channel's messageLog in database

@@ -1,30 +1,16 @@
+{{!-- page to display all friend channels and components necesscary to exchange messages between friends  --}}
+
 {{>navbar page="friends" subpage="all"}}
 
-{{#if friendsInfo}}
-    <div class="column channels-container list-group">
-        {{#each friendsInfo}}
-            <a href="/friends/all/{{this.channelId}}" class="list-group-item list-group-item-action 
-            {{#iff ../selectedChannelId '===' this.channelId}}
-                active
-            {{/iff}}">
-                {{this.id}} {{this.username}}
-            </a>
-        {{/each}}
-    </div>
-    <div class="column message-column-friends">
-        <div id="message-container" class="message-log">
-            <div id="spinner-box" class="text-center spinner-box">
-                <div class="spinner-border spinner-border-sm spinner-green" role="status">
-                    <span class="sr-only">Loading...</span>
-                </div>
-                Loading...
-            </div>
-        </div>
-        <form id="send-container" class="form-inline">
-            <textarea class="form-control submit-textarea" name="message" id="message-input" style="margin: 20px 0 10px 0;"></textarea>
-            <button type="submit" class="btn btn-success" id="send-button" style="margin:auto;width:15%">Send</button>
-        </form>
-    </div>
+{{#if channelInfo}}
+    {{>channelslist
+        title="Friends"
+        endPoint="friends"
+    }}
+
+    {{#>sendcolumn
+        type="message-column-friends"
+    }}{{/sendcolumn}}
 
     {{>errormodal
         id="spam-modal"

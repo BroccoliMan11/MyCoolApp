@@ -19,8 +19,8 @@ async function rejectGroupInvitation(id){
 /*Summary: remove invitation "div" element 
 Input: id = selected group id*/
 function removeInvitationDiv(id){
-    const invitation = $(`[group_id="${id}"]`);
-    const container = $("#invitations-container");
+    const invitation = $(`[request_id="${id}"]`);
+    const container = $(".request-container");
     invitation.fadeOut(200, () => {
         invitation.remove();
         if (container.children().length === 0){

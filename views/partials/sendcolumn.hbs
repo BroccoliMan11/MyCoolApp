@@ -1,0 +1,64 @@
+{{!-- the middle column for displaying the message log and the message input (footer buttons are inserted in here) --}}
+
+<style>
+    .message-column-friends {
+        width: calc(80% - 2 * 10px);
+        height: 100%;
+        margin: 0 10px 0 10px;
+        box-sizing: border-box;
+    }
+
+    .message-column-groups {
+        width: calc(60% - 2 * 10px);
+        height: 100%;
+        margin: 0 10px 0 10px;
+        box-sizing: border-box;
+    }
+
+    .message-log {
+        height: 360px;
+        width: 100%;
+        background-color: rgb(40, 40, 40);
+        overflow-y: auto;
+        overflow-wrap: break-word;
+        box-sizing: border-box;
+        border-radius: 5px;
+    }
+
+    .send-container {
+        margin: 10px 0 10px 0;
+    }
+
+    .message-input {
+        resize: none;
+        min-width: 80%;
+    }
+
+    .message-button {
+        margin: auto;
+        width: 15%;
+    }
+
+    @media(max-width: 770px){
+        .message-input, .message-button, .group-footer button {
+            min-width: 100%;
+        }
+        .group-footer button, .message-button {
+            margin: 10px 0 0 0;
+        }
+    }
+</style>
+
+<div class="column {{type}}">
+    <div class="message-log">
+        <div class="text-center spinner-box">
+            <div class="spinner-border spinner-border-sm spinner-green" role="status"></div>
+            Loading...
+        </div>
+    </div>
+    <form class="send-container form-inline">
+        <textarea class="form-control message-input" name="message" placeholder="Enter your message here..."></textarea>
+        <button type="submit" class="btn btn-success message-button">Send</button>
+    </form>
+    {{> @partial-block}}
+</div>

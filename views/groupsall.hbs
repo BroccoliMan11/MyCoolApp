@@ -1,42 +1,21 @@
+{{!-- page to display all group channels and components necesscary to exchange messages between groups  --}}
+
 {{>navbar page="groups" subpage="all"}}
 
-{{#if groupsInfo}}
-    <div class="column channels-container list-group">
-        {{#each groupsInfo}}
-            <a href="/groups/all/{{this.id}}" class="list-group-item list-group-item-action
-            {{#iff ../selectedChannelId '===' this.id}}
-                active
-            {{/iff}}">
-                {{this.id}} {{this.name}}
-            </a>
-        {{/each}}
-    </div>
-    <div class="column message-column-groups">
-        <div id="message-container" class="message-log">
-            <div id="spinner-box" class="text-center spinner-box">
-                <div class="spinner-border spinner-border-sm spinner-green" role="status"></div>
-                Loading...
-            </div>
-        </div>
-        <form id="send-container" class="form-inline">
-            <textarea class="form-control submit-textarea" name="message" id="message-input" style="margin: 10px 0 10px 0;"></textarea>
-            <button type="submit" class="btn btn-success" id="send-button" style="margin:auto;width:15%">Send</button>
-        </form>
-        <div>
-            <button class="btn btn-success btn-sm" style="height:20%" data-toggle="modal" data-target="#invite-modal">Invite</button>
-            <button class="btn btn-danger btn-sm" style="margin-left: 10px;height:20%" data-toggle="modal" data-target="#leave-modal">Leave</button>
-            {{#iff role '===' 'leader'}}
-                <button class="btn btn-danger btn-sm" style="margin-left: 10px;height:20%" data-toggle="modal" data-target="#kick-modal">Kick</button>
-            {{/iff}}
-        </div>
-    </div>
-    <div class="column members-container list-group">
-        {{#each groupMembersInfo}}
-            <div class="list-group-item list-group-item-action">
-                {{this.id}} {{this.username}}
-            </div>
-        {{/each}}
-    </div>
+{{#if channelInfo}}
+
+    {{>channelslist
+        title="Groups"
+        endPoint="groups"
+    }}
+
+    {{#>sendcolumn
+        type="message-column-groups"
+    }}
+        {{>groupsfooter}}
+    {{/sendcolumn}}
+
+    {{>memberslist}}
 
     {{>errormodal
         id="spam-modal"

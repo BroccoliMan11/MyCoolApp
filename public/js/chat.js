@@ -1,12 +1,12 @@
 const socket = io(); //socket emit and listen
 
-const messageContainer = document.querySelector('#message-container'); //container to display messages in
-const messageForm = document.querySelector("#send-container"); //the whole form to submit messages 
-const messageInput = document.querySelector("#message-input"); //the actual messgae input textbox (inside "messageForm")
-const loading = document.querySelector("#spinner-box"); //the spinning icon
+const messageContainer = document.querySelector('.message-log'); //container to display messages in
+const messageForm = document.querySelector(".send-container"); //the whole form to submit messages 
+const messageInput = document.querySelector(".message-input"); //the actual messgae input textbox (inside "messageForm")
+const loading = document.querySelector(".message-log .spinner-box"); //the spinning icon
 
 /*Summary: join the channel*/
-const selectedChannelId = window.location.pathname.split('/').pop();
+const selectedChannelId = window.location.pathname.split('/').pop(); //if you change this variable the whole thing pops do don't
 socket.emit('enterChannel', selectedChannelId)
 
 /*Summary: go to login page (when the user session does not exist)*/
@@ -14,10 +14,53 @@ socket.on('noSession', () => {
     window.location.href = '/login';
 });
 
-/*Summary: reload page to remove user from channel page*/
-socket.on('leaveUser', () => {
-    window.location.href = window.location.pathname.split('/').splice(0, 3).join('/');
+/*Summary: reload page to remove user from channel page OR remove channel if it is not selected*/
+socket.on('leaveUser', (channelId) => {
+    console.log("leaving user!");
+    if (channelId === selectedChannelId) {
+        window.location.href = window.location.pathname.split('/').splice(0, 3).join('/');
+    } else {
+        const channelRemoving = document.querySelector(`.channels-container [channel_id=${channelId}]`);
+        channelRemoving.remove();
+    }
 });
+
+/*Summary: deletes member from members list when they leave*/
+socket.on("memberLeave", (userId) => {
+    const memberRemoving = document.querySelector(`.members-container [user_id=${userId}]`);
+    memberRemoving.remove();
+});
+
+/*Summary: adds member to members list when they join */
+socket.on("memberJoin", (user) => {
+    const memberAdding = document.createElement("div");
+    memberAdding.classList.add("list-group-item", "list-group-item-action");
+    memberAdding.setAttribute("user_id", user.id);
+    memberAdding.innerText = user.username
+    const memberContainer = document.querySelector(".members-container");
+    memberContainer.append(memberAdding);
+});
+
+/*Summary: updates member's username when it is changed*/
+socket.on("memberUsernameUpdate", (user) => {
+    const memberUpdating = document.querySelector(`.members-container [user_id=${user.id}]`);
+    memberUpdating.innerText = user.username;
+})
+
+/*Summary: when the user is promoted */
+socket.on("promote", (channelId) => {
+    if (selectedChannelId === channelId) {
+        const kickButton = document.createElement("button");
+        kickButton.classList.add("btn", "btn-danger", "btn-sm");
+        kickButton.style.marginLeft = "10px";
+        kickButton.style.height = "20%";
+        kickButton.setAttribute("data-toggle", "modal");
+        kickButton.setAttribute("data-target", "#kick-modal");
+        kickButton.innerText = "Kick";
+        const footer = document.querySelector(".footer");
+        footer.append(kickButton);
+    }
+}); 
 
 /*Summary: listen if user was spamming*/
 socket.on('spam', () => {
@@ -27,7 +70,6 @@ socket.on('spam', () => {
 
 /*Summary: append messages to message container*/
 socket.on('message', message => {
-    console.log(message);
     const isAtBottom = (messageContainer.scrollHeight - messageContainer.scrollTop === messageContainer.clientHeight);
     outputMessage(message, true);
     if (isAtBottom){
@@ -37,7 +79,6 @@ socket.on('message', message => {
 
 /*Summary: load messages into message container (appending to bottom)*/
 socket.on('loadMessages', (messageLog) => {
-    console.log(messageLog);
     if (messageLog.allMessagesLoaded){
         loading.style.display = "none";
     }

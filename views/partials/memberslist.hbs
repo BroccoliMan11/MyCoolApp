@@ -1,0 +1,21 @@
+{{!-- component for displaying the members list in the "groups all" page --}}
+
+<style>
+    .members-container {
+        width: calc(20% - 10px);
+        height: 475px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        margin-right: 10px;
+        box-sizing: border-box;
+}
+</style>
+
+<div class="column members-container list-group">
+    <div class="column-title">Members</div>
+    {{#each groupMembersInfo}}
+        <div class="list-group-item list-group-item-action" user_id="{{this.id}}">
+            {{this.username}}
+        </div>
+    {{/each}}
+</div>

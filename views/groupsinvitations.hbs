@@ -1,20 +1,10 @@
+{{!-- page to allow user to accept and reject friend requests --}}
+
 {{>navbar page="groups" subpage="invitations"}}
 
-<div class="container">
-    {{#if inviteGroupsInfo}}
-        <ul id="invitations-container" class="list-group requests">
-            {{#each inviteGroupsInfo}}
-                <li class="list-group-item" group_id="{{this.id}}">
-                    <p style="color:inherit">{{this.id}} {{this.name}}</p>
-                    <button type="button" class="btn btn-success" onclick='acceptGroupInvitation("{{this.id}}")'>Accept</button>
-                    <button type="button" class="btn btn-danger" onclick='rejectGroupInvitation("{{this.id}}")'>Reject</button>
-                </li>
-            {{/each}}
-        </ul>
-    {{else}}
-        No group invitations
-    {{/if}}
-</div>
+{{>requestlist
+    type="groups"
+}}
 
 <script src="/public/js/groupinvitations.js"></script>
 

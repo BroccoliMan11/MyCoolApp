@@ -1,20 +1,10 @@
+{{!-- page to allow the user to accept and reject friend requests --}}
+
 {{>navbar page="friends" subpage="requests"}}
 
-<div class="container">
-    {{#if requestFriendsInfo}}
-        <ul id="requests-container" class="list-group requests">
-            {{#each requestFriendsInfo}}
-                <li class="list-group-item" user_id="{{this.id}}">
-                    <p style="color:inherit">{{this.id}} {{this.username}}</p>
-                    <button type="button" class="btn btn-success" onclick='acceptFriendRequest("{{this.id}}")'>Accept</button>
-                    <button type="button" class="btn btn-danger" onclick='rejectFriendRequest("{{this.id}}")'>Reject</button>
-                </li>
-            {{/each}}
-        </ul>
-    {{else}}
-        No friend requests
-    {{/if}}
-</div>
+{{>requestlist
+    type="friends"
+}}
 
 <script src="/public/js/friendsrequests.js"></script>
 

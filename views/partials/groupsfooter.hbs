@@ -1,0 +1,34 @@
+{{!-- footer buttons "invite", "leave" and "kick" buttons seen in the "groups all" page --}}
+
+<style>
+    .group-footer button {
+        margin-right: 10px;
+        height: 20%;
+    }
+</style>
+
+<div class="group-footer">
+    <button 
+        class="btn btn-success btn-sm" 
+        data-toggle="modal" 
+        data-target="#invite-modal"
+    >
+        Invite
+    </button>
+    <button 
+        class="btn btn-danger btn-sm" 
+        data-toggle="modal" 
+        data-target="#leave-modal"
+    >
+        Leave
+    </button>
+    {{#iff role '===' 'leader'}}
+        <button 
+            class="btn btn-danger btn-sm" 
+            data-toggle="modal" 
+            data-target="#kick-modal"
+        >
+            Kick
+        </button>
+    {{/iff}}
+</div>

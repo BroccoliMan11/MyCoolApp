@@ -19,8 +19,8 @@ async function rejectFriendRequest(id){
 /*Summary: remove request "div" element 
 Input: id = selected user id*/
 function removeRequestDiv(id){
-    const request = $(`[user_id="${id}"]`);
-    const container = $("#requests-container");
+    const request = $(`[request_id="${id}"]`);
+    const container = $(".requests-container");
     request.fadeOut(200, () => {
         request.remove();
         if (container.children().length === 0){

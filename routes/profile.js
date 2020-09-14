@@ -8,12 +8,14 @@ const db = require("../database");
 //middleware functions
 const { authenticationMiddleware } = require('../utils/middlewares');
 const { findUserByUsername } = require("../utils/dbretrieve");
+const { updateMemberUsername } = require('../socketevents');
 
 /*Summary: render "profile" page with user's details */
 router.get('/', authenticationMiddleware(), (req, res) => {
     return res.render('profile', { username: req.user.username });
 });
 
+/*Summary: validates user input to change their personal details*/
 router.post("/", authenticationMiddleware(), async (req, res) => {
     const { username, oldPassword, newPassword, changePassword, newPasswordConfirm } = req.body;
     const errors = [];
@@ -62,7 +64,10 @@ router.post("/", authenticationMiddleware(), async (req, res) => {
         return res.render("profile", { errors, username: req.user.username });
     }
 
-    await db.ref(`users/${req.user.id}/username`).set(username);
+    if (req.user.username !== username){
+        await db.ref(`users/${req.user.id}/username`).set(username);
+        await updateMemberUsername(req.user, username);
+    }
 
     if (changePassword){
         const hashedPassword = bcrypt.hashSync(newPassword, saltRounds);
